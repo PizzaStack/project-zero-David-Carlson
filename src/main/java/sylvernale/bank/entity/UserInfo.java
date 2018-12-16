@@ -1,12 +1,12 @@
 package sylvernale.bank.entity;
 
-public class PersonalInfo {
+public class UserInfo {
 	private String firstName;
 	private String lastName;
 	private String socialSecurityNumber;
 	private String address;
 	
-	public PersonalInfo(String firstName, String lastName, String socialSecurityNumber, String address) { 
+	public UserInfo(String firstName, String lastName, String socialSecurityNumber, String address) { 
 		
 	}
 	

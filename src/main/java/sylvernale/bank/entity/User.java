@@ -1,10 +1,7 @@
 package sylvernale.bank.entity;
 
 public class User {
-	private PersonalInfo info;
-	private int accountID;
-	
-	
-	
-	
+	private UserInfo info;
+	private int accountID;	
+	// Creation Date
 }
