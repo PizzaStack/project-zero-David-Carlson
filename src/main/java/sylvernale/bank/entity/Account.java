@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Account {
 	protected List<User> owners;
+	protected int accountID;
 	protected double balance;
 	protected AccountType accountType;
 	public enum AccountType {
@@ -16,11 +17,18 @@ public class Account {
 		accountType = AccountType.Debit;
 	}
 	
-	public Account(User owner, double startingBalance, AccountType accountType) {
+	public Account(User owner, int accountID, double startingBalance, AccountType accountType) {
 		this();
 		owners.add(owner);
 		balance = startingBalance;
 		this.accountType = accountType;
+	}
+	@Override
+	public String ToString() {
+		String type = accountType == AccountType.Debit ? "Debit" : "Credit";
+//		String owners = 
+//		String.format("Account #%s - Type: %s - Balance, args)
+		// TODO: Finish
 	}
 	
 	

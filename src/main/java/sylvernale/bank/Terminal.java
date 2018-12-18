@@ -155,19 +155,23 @@ public class Terminal {
 		System.out.println("User account created! Logging in...");
 		currentUser = user;
 		state = State.LoggedIn;		
-		currentPermission = Permissions.User;
-		
+		currentPermission = Permissions.User;		
 	}
 
 	public void runLoggedIn() {
 		switch(currentPermission) {
 		case User:
+			runUserLoggedIn();
 			break;
 		case Dealer:
 			break;
 		case Pitboss:
 			break;
 		}
+	}
+	public void runUserLoggedIn() {
+		System.out.println("User Portal  -- " + currentUser.getUsername());
+		System.out.println("Enter");
 	}
 
 	public Boolean hasEnteredExitKeyword(String input) {

@@ -3,6 +3,8 @@ package sylvernale.bank;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -10,8 +12,8 @@ import sylvernale.bank.entity.Account;
 import sylvernale.bank.entity.User;
 
 public class Database {
-	protected Map<String, User> users;
-	protected Map<String, Account> accounts;
+	protected Map<String, User> usersMap;
+	protected Map<Integer, Account> accountsMap;
 	protected String dataFilePath = "./data";
 	protected String loggingPath = "./logs";
 	protected String loadPath;
@@ -21,8 +23,8 @@ public class Database {
 
 	public Database() {
 		// TODO: Create Separate constructor which reads from file
-		users = new TreeMap<String, User>();
-		accounts = new TreeMap<String, Account>();
+		usersMap = new TreeMap<String, User>();
+		accountsMap = new TreeMap<Integer, Account>();
 	}
 
 	public Database(String loadPath, String savePath) {
@@ -33,8 +35,8 @@ public class Database {
 			this.savePath = Paths.get(root.toString(), savePath).toString();
 
 		if (loadPath == null) {
-			users = new TreeMap<String, User>();
-			accounts = new TreeMap<String, Account>();
+			usersMap = new TreeMap<String, User>();
+			accountsMap = new TreeMap<Integer, Account>();
 		} else {
 			// TODO: Load files, add logging
 		}
@@ -43,29 +45,37 @@ public class Database {
 
 	public void addUser(User user) {
 		String username = user.getUsername();
-		if (users.containsKey(username))
+		if (usersMap.containsKey(username))
 			throw new InvalidParameterException("Added a user that already exists");
 		else
-			users.put(username, user);
+			usersMap.put(username, user);
 	}
 
 	public Boolean containsUser(String username, String password) {
-		return users.containsKey(username) && users.get(username).getPassword().equals(password);
+		return usersMap.containsKey(username) && usersMap.get(username).getPassword().equals(password);
 	}
 
 	public Boolean containsUser(String username) {
-		return users.containsKey(username);
+		return usersMap.containsKey(username);
 	}
 
 	public User getUser(String username) throws Exception {
-		if (users.containsKey(username))
-			return users.get(username);
+		if (usersMap.containsKey(username))
+			return usersMap.get(username);
 		else
 			throw new Exception("Attempted to get non-existant user: " + username);
 	}
 
 	public int getNextUserID() {
 		return nextUserID++;
+	}
+	
+	public List<Account> getAllUserAccounts(List<Integer> accountIDs) {
+		List<Account> accounts = new ArrayList<Account>();
+		for (Integer id : accountIDs){
+			accounts.add(accountsMap.get(id));
+		}
+		return accounts;
 	}
 
 }

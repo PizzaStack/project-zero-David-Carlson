@@ -30,11 +30,14 @@ public class User {
 	public String getUsername() {
 		return username;
 	}
-	
+
 	public String getFirstName() {
 		return info.getFirstName();
 	}
 
+	public String getFullName() {
+		return info.getFirstName() + " " + info.getLastName();
+	}
 
 	public UserInfo getUserInfo() {
 		return info;
