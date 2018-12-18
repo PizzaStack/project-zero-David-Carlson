@@ -23,33 +23,34 @@ public class Account {
 		this.accountType = accountType;
 	}
 	
+	
 	public List<User> getOwners() {
 		return owners;
 	}
 
 	public boolean containsOwner(User user) {
-		// TODO Auto-generated method stub
-		return false;
+		return owners.contains(user);
 	}
 
-	public Object getAccountType() {
-		// TODO Auto-generated method stub
-		return null;
+	public AccountType getAccountType() {
+		return accountType;
 	}
-
-	public Object getBalance() {
-		// TODO Auto-generated method stub
-		return null;
+	public void changeBalance(double balanceDelta) {
+		balance += balanceDelta;
+		if (accountType == AccountType.Debit)
+			balance = Math.max(balance, 0);
+	}
+	public Double getBalance() {
+		return balance;
 	}
 
 	public void changeAccountType(AccountType newType) {
-		// TODO Auto-generated method stub
-		
+		accountType = newType;		
 	}
 
-	public void addOwner(User user2) {
-		// TODO Auto-generated method stub
-		
+	public void addOwner(User newOwner) {
+		if (!owners.contains(newOwner))
+			owners.add(newOwner);		
 	}
 
 }

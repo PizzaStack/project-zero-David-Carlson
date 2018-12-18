@@ -2,6 +2,7 @@ package sylvernale.bank;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidParameterException;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -15,6 +16,8 @@ public class Database {
 	protected String loggingPath = "./logs";
 	protected String loadPath;
 	protected String savePath;
+	protected int nextUserID;
+	protected int nextAccountID;
 
 	public Database() {
 		// TODO: Create Separate constructor which reads from file
@@ -38,18 +41,31 @@ public class Database {
 
 	}
 
-	public Boolean addUser(User user) {
-		return false;
+	public void addUser(User user) {
+		String username = user.getUsername();
+		if (users.containsKey(username))
+			throw new InvalidParameterException("Added a user that already exists");
+		else
+			users.put(username, user);
 	}
 
 	public Boolean containsUser(String username, String password) {
-		return false;
+		return users.containsKey(username) && users.get(username).getPassword().equals(password);
 	}
+
+	public Boolean containsUser(String username) {
+		return users.containsKey(username);
+	}
+
 	public User getUser(String username) throws Exception {
 		if (users.containsKey(username))
 			return users.get(username);
 		else
 			throw new Exception("Attempted to get non-existant user: " + username);
+	}
+
+	public int getNextUserID() {
+		return nextUserID++;
 	}
 
 }

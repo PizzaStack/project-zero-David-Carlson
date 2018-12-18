@@ -1,20 +1,48 @@
 package sylvernale.bank.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sylvernale.bank.Permissions;
 
 public class User {
 	protected UserInfo info;
-	protected int accountID;	
+	protected String username;
+	protected String password;
+	protected int userID;
 	protected Permissions permission;
-	
+	protected List<Integer> accounts;
+
 	public User() {
 		permission = Permissions.None;
+		accounts = new ArrayList<Integer>();
 	}
-	public User(UserInfo info, int accountID) {
+
+	public User(UserInfo info, String username, String password, int userID) {
 		this.info = info;
-		this.accountID = accountID;
+		this.username = username;
+		this.password = password;
+		this.userID = userID;
 		permission = Permissions.User;
+		accounts = new ArrayList<Integer>();
+	}
+
+	public String getUsername() {
+		return username;
 	}
 	
+	public String getFirstName() {
+		return info.getFirstName();
+	}
+
+
+	public UserInfo getUserInfo() {
+		return info;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
 	// Creation Date
 }
