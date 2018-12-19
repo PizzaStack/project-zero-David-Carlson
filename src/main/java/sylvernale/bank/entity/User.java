@@ -18,13 +18,20 @@ public class User {
 		accounts = new ArrayList<Account>();
 	}
 
-	public User(UserInfo info, String username, String password, int userID) {
+	public User(UserInfo info, int userID, String username, String password) {
 		this.info = info;
 		this.username = username;
 		this.password = password;
 		this.userID = userID;
 		permission = Permissions.User;
 		accounts = new ArrayList<Account>();
+	}
+	public User(int userID, String username, String password, Permissions permission,
+			String firstName, String lastName, String socialSecurityNumber, String address) {
+		this.userID = userID;
+		this.username = username;
+		this.password = password;
+		this.info = new UserInfo(firstName, lastName, socialSecurityNumber, address);
 	}
 
 	public String getUsername() {
@@ -52,7 +59,15 @@ public class User {
 	}
 
 	public void addAccount(Account account) {
-		accounts.add(account);		
+		accounts.add(account);
+	}
+
+	public Permissions getPermission() {
+		return permission;
+	}
+
+	public static String hashPassword(String password) {
+		return String.valueOf(password.hashCode());
 	}
 
 	// Creation Date

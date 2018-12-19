@@ -9,7 +9,10 @@ public class UserInfo {
 	private String address;
 	
 	public UserInfo(String firstName, String lastName, String socialSecurityNumber, String address) { 
-		
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.socialSecurityNumber = socialSecurityNumber;
+		this.address = address;
 	}
 	
 	public static Boolean isNameValid(String name) {

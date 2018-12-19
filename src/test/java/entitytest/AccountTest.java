@@ -23,7 +23,7 @@ public class AccountTest {
 	@Before
 	public void setupNecessaryClasses() {
 		user = new User();		
-		account = new Account(user, userID, balance, accountType);
+		account = new Account(user, userID, balance);
 	}
 	
 	@Test 
@@ -35,20 +35,19 @@ public class AccountTest {
 	public void constructAccountWithData() {
 		User user = new User();
 		AccountType type = AccountType.Credit;
-		Account account = new Account(user, userID, balance, type);
+		Account account = new Account(user, userID, balance);
 		assertNotNull(account);
 	}
 	@Test 
-	public void testChangeBalance() {
-		double balanceDelta = -500;
-		account.changeBalance(balanceDelta);
+	public void testWithdrawAmount() {
+		double balanceDelta = 500;
+		account.withdrawAmount(balanceDelta);
 		assertEquals(account.getBalance(), balance + balanceDelta, 0.01);
 	}
 	@Test
 	public void testOverdraw() {
-		account.changeAccountType(AccountType.Debit);
-		double balanceDelta = -1500;
-		account.changeBalance(balanceDelta);
+		double balanceDelta = 1500;
+		account.withdrawAmount(balanceDelta);
 		assertEquals(account.getBalance(), 0, 0.01);
 	}
 	
@@ -70,18 +69,9 @@ public class AccountTest {
 		assertTrue(account.containsOwner(user));
 		assertFalse(account.containsOwner(new User()));
 	}
-	@Test
-	public void testGetAccountType() {
-		assertEquals(account.getAccountType(), accountType);
-	}
+
 	@Test
 	public void testGetBalance() {
 		assertEquals(account.getBalance(), balance, 0.01);
-	}
-	
-	@Test
-	public void testChangeAccountType() {
-		AccountType newType = AccountType.Debit;
-		account.changeAccountType(newType);
 	}
 }

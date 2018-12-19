@@ -12,8 +12,6 @@ import sylvernale.bank.entity.AccountType;
 public class Terminal {
 
 	protected Database database;
-	protected User currentUser;
-	protected Permissions currentPermission;
 	protected State state;
 
 	protected enum State {
@@ -23,32 +21,46 @@ public class Terminal {
 	protected Scanner scanner;
 	protected String[] exitKeywords = { "quit", "exit", "close", "kill" };
 
-	public Terminal() {
+	public Terminal(Scanner scanner) {
+		this.scanner = scanner;
 		database = new Database();
+		
 		state = State.SplashScreen;
-		currentPermission = Permissions.None;
+	}
+	
+	public void fillDatabase() {
+		String[] names = {"user", "user2", "dealer", "pitboss"};
+		Permissions[] permissions = {
+				Permissions.User, Permissions.User, 
+				Permissions.Dealer, Permissions.Pitboss};
+		for (int i = 0; i < names.length; i++) {
+			String n = names[i];
+			User user = new User(i, n, n, permissions[i], n,n,n,n);
+			database.addUser(user);
+		}
 	}
 
-	public Terminal(String loadPath, String savePath) {
+	public Terminal(Scanner scanner, String loadPath, String savePath) {
+		this.scanner = scanner;
 		database = new Database(loadPath, savePath);
 		state = State.SplashScreen;
-		currentPermission = Permissions.None;
 	}
 
 	public void runTerminal() throws Exception {
+		User currentUser = null;
 		while (state != State.Exiting) {
 			switch (state) {
 			case SplashScreen:
 				runSplashScreen();
 				break;
 			case LoggingIn:
-				runLogin();
+				currentUser = runLogin();
 				break;
 			case AccountCreation:
-				runAccountCreation();
+				currentUser = runAccountCreation();
 				break;
 			case LoggedIn:
-				runLoggedIn();
+				runLoggedIn(currentUser);
 				break;
 			default:
 				throw new Exception("Nonhandled Terminal State");
@@ -86,7 +98,7 @@ public class Terminal {
 		state = State.Exiting;
 	}
 
-	public void runLogin() throws Exception {
+	public User runLogin() throws Exception {
 		System.out.println("Login Screen: \n");
 		String input = null;
 		do {
@@ -97,11 +109,11 @@ public class Terminal {
 			input = scanner.nextLine();
 			if (input.equals("leave")) {
 				state = State.SplashScreen;
-				return;
+				return null;
 			}
 			if (hasEnteredExitKeyword(input)) {
 				state = State.Exiting;
-				return;
+				return null;
 			}
 
 			// TODO: If database doesn't contain name, message and continue
@@ -114,14 +126,15 @@ public class Terminal {
 				String name = user.getUserInfo().getFirstName();
 				System.out.println("Welcome, " + name + ".");
 				state = State.LoggedIn;
-				return;
+				return user;
 			} else
 				System.out.println("Invalid credentials, please try again.");
 
 		} while (!hasEnteredExitKeyword(input));
+		return null;
 	}
 
-	public void runAccountCreation() {
+	public User runAccountCreation() {
 		System.out.println("Account creation wizard: \n");
 		String username, password, fname, lname, social, address;
 		do {
@@ -150,38 +163,41 @@ public class Terminal {
 		} while (!UserInfo.isAddressValid(address));
 
 		UserInfo userInfo = new UserInfo(fname, lname, social, address);
+		
 		// I'm 'protecting' the password
-		password = String.valueOf(password.hashCode());
-		User user = new User(userInfo, username, password, database.getNextUserID());
+		User user = new User(userInfo, database.getNextUserID(), username, User.hashPassword(password));
 		database.addUser(user);
 		System.out.println("User account created! Logging in...");
-		currentUser = user;
 		state = State.LoggedIn;
-		currentPermission = Permissions.User;
+		return user;
 	}
 
-	public void runLoggedIn() throws Exception {
+	public User runLoggedIn(User currentUser) throws Exception {
+		Permissions currentPermission = currentUser.getPermission();
 		switch (currentPermission) {
 		case User:
-			runUserLoggedIn();
-			break;
+			return runUserLoggedIn(currentUser);
 		case Dealer:
-			break;
+			return null; // TODO Change
 		case Pitboss:
-			break;
+			return null; // TODO change
 		default:
 			throw new Exception("Shouldn't be logged in without a permission");
 		}
 	}
 
-	public void runUserLoggedIn() {
+	public void runUserLoggedIn(User currentUser) {
 
 		while (state != State.Exiting) {
-			System.out.println("User Portal  -- " + currentUser.getUsername());
+			System.out.println("\nUser Portal  -- " + currentUser.getUsername());
 			List<Account> userAccounts = currentUser.getAccounts();
-			System.out.println("\tAccounts: ");
-			for (Account account : userAccounts)
-				System.out.println("\t\t" + account.toString());
+			if (userAccounts.size() == 0) {
+				System.out.println("\tYou have no approved accounts :( ");
+			} else {
+				System.out.println("\tAccounts: ");
+				for (Account account : userAccounts)
+					System.out.println("\t\t" + account.toString());
+			}
 
 			System.out.println("\nEnter 'apply' to request a new account");
 			System.out.println("Enter 'join' to apply for joint access");
@@ -192,7 +208,7 @@ public class Terminal {
 			String input = scanner.nextLine();
 			switch (input) {
 			case "apply":
-				applyForAccount();
+				applyForAccount(currentUser);
 				break;
 			case "join":
 				applyForJointAccount();
@@ -210,51 +226,58 @@ public class Terminal {
 		}
 	}
 
-	public void applyForAccount() {
-		// TODO: Add credit check?
-		// Need type, 
-		AccountType type;
-		System.out.println("What type of account? Enter 'credit' or 'debit'");
-		String input = scanner.nextLine().toLowerCase();
-		switch (input) {
-		case "credit":
-			type = AccountType.Credit;
-			break;
-		case "debit":
-			type = AccountType.Debit;
-			break;
-		case "sudo credit":
-			database.addAccount(AccountType.Credit, currentUser);
-			return;
-		case "sudo debit":
-			database.addAccount(AccountType.Debit, currentUser);
-			return;
-		default:
-			System.out.println("Incorrect type, creating Debit Application");
-			type = AccountType.Debit;				
-		}
-		database.addAccountApp(type, currentUser);
-		System.out.println("Application submitted! It will be processed soon.");	
+	public void applyForAccount(User currentUser) {
+		database.addAccountApp(currentUser);
+		System.out.println("Application submitted! It will be processed soon.");
 	}
 
 	public void applyForJointAccount() {
 		System.out.println("Joint account application");
-		
+		System.out.println("Enter '[accountID] [ownerUsername] [ownerPassword]'");
+		System.out.print("In order to gain access to another user's account");
+		try {
+			String[] tokens = scanner.nextLine().split(" ");
+			if (tokens.length != 3) {
+				System.out.println("Invalid number of arguments");
+				return;
+			}
+			Integer accountID = Integer.valueOf(tokens[0]);
+			String username = tokens[1];
+			String password = String.valueOf(tokens[2].hashCode());
+			if (database.isAccountOwnedByUser(accountID, username, User.hashPassword(password))) {
+
+			} else {
+				System.out.println("No account found with given credentials");
+				return;
+			}
+		} catch (Exception e) {
+
+		}
+
 	}
 
 	public void transactWithOneAccount(List<Account> accounts) {
 		System.out.print("Enter '[accountID] withdraw [number]' for withdrawals");
 		System.out.print("Enter '[accountID] deposit [number]' for deposits");
-		String[] tokens = scanner.nextLine().split(" ");
-		if (tokens.length != 3)
-		{
-			System.out.println("Malformed statement. Try '12 withdraw 200.5'");
+		try {
+			String[] tokens = scanner.nextLine().split(" ");
+			if (tokens.length != 3) {
+				System.out.println("Malformed statement. Try '12 withdraw 200.5'");
+				return;
+			}
+
+			int accountID = Integer.valueOf(tokens[0]);
+			String operation = tokens[1];
+			Double amount = Double.valueOf(tokens[2]);
+			// For my accounts, find ones with a given ID and withdraw from them b
+			for (Account account : accounts) {
+				if (account.getAccountID() == accountID)
+					account.withdrawAmount(amount);
+			}
+		} catch (Exception e) {
+
 		}
-		int accountID = Integer.valueOf(tokens[0]);
-		String operation = tokens[1];
-		Double amount = Double.valueOf(tokens[2]);
-		accounts.stream().filter( A -> A.getAccountID() == accountID).map(A -> A.withdrawAmount())
-		
+
 	}
 
 	public void tranferBetweenAccounts(List<Account> accounts) {

@@ -15,7 +15,7 @@ import sylvernale.bank.entity.User;
 
 public class Database {
 	protected Map<String, User> usersMap;
-	protected List<Account> accountsList;
+	protected Map<Integer, Account> accountsMap;
 	protected List<AccountApplication> accountApps;
 	protected String dataFilePath = "./data";
 	protected String loggingPath = "./logs";
@@ -27,7 +27,7 @@ public class Database {
 	public Database() {
 		// TODO: Create Separate constructor which reads from file
 		usersMap = new TreeMap<String, User>();
-		accountsList = new ArrayList<Account>();
+		accountsMap = new TreeMap<Integer, Account>();
 	}
 
 	public Database(String loadPath, String savePath) {
@@ -39,7 +39,7 @@ public class Database {
 
 		if (loadPath == null) {
 			usersMap = new TreeMap<String, User>();
-			accountsList = new ArrayList<Account>();
+			accountsMap = new TreeMap<Integer, Account>();
 		} else {
 			// TODO: Load files, add logging
 		}
@@ -56,6 +56,18 @@ public class Database {
 
 	public Boolean containsUser(String username, String password) {
 		return usersMap.containsKey(username) && usersMap.get(username).getPassword().equals(password);
+	}
+
+	public Boolean isAccountOwnedByUser(int accountID, String username, String password){
+		if (accountsMap.containsKey(accountID)){
+			Account account = accountsMap.get(accountID);
+			for (User owner : account.getOwners()){
+				if (owner.getUsername().equals(username) && owner.getPassword().equals(password)){
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public Boolean containsUser(String username) {
@@ -80,19 +92,19 @@ public class Database {
 	public List<Account> getAllUserAccounts(List<Integer> accountIDs) {
 		List<Account> accounts = new ArrayList<Account>();
 		for (Integer id : accountIDs) {
-			accounts.add(accountsList.get(id));
+			accounts.add(accountsMap.get(id));
 		}
 		return accounts;
 	}
 
-	public void addAccountApp(AccountType type, User owner) {
-		accountApps.add(new AccountApplication(type, owner));
+	public void addAccountApp(User owner) {
+		accountApps.add(new AccountApplication(owner));
 	}
 
 	public void addAccount(AccountType type, User owner) {
-		Account account = new Account(owner, getNextAccountID(), 0, type);
+		Account account = new Account(owner, getNextAccountID(), 0);
 		owner.addAccount(account);
-		accountsList.add(account);
+		accountsMap.put(account.getAccountID(), account);
 	}
 
 }
