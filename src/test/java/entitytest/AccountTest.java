@@ -3,6 +3,7 @@ package entitytest;
 import org.junit.Test;
 
 import sylvernale.bank.entity.Account;
+import sylvernale.bank.entity.AccountType;
 import sylvernale.bank.entity.User;
 
 import static org.junit.Assert.*;
@@ -14,14 +15,15 @@ import org.junit.BeforeClass;
 
 public class AccountTest {
 	double balance = 1000;
-	Account.AccountType accountType = Account.AccountType.Credit;
+	AccountType accountType = AccountType.Credit;
 	User user;
+	int userID = 0;
 	Account account;
 	
 	@Before
 	public void setupNecessaryClasses() {
 		user = new User();		
-		account = new Account(user, balance, accountType);
+		account = new Account(user, userID, balance, accountType);
 	}
 	
 	@Test 
@@ -32,9 +34,8 @@ public class AccountTest {
 	@Test 
 	public void constructAccountWithData() {
 		User user = new User();
-		double balance = 100;
-		Account.AccountType type = Account.AccountType.Credit;
-		Account account = new Account(user, balance, type);
+		AccountType type = AccountType.Credit;
+		Account account = new Account(user, userID, balance, type);
 		assertNotNull(account);
 	}
 	@Test 
@@ -45,7 +46,7 @@ public class AccountTest {
 	}
 	@Test
 	public void testOverdraw() {
-		account.changeAccountType(Account.AccountType.Debit);
+		account.changeAccountType(AccountType.Debit);
 		double balanceDelta = -1500;
 		account.changeBalance(balanceDelta);
 		assertEquals(account.getBalance(), 0, 0.01);
@@ -80,7 +81,7 @@ public class AccountTest {
 	
 	@Test
 	public void testChangeAccountType() {
-		Account.AccountType newType = Account.AccountType.Debit;
+		AccountType newType = AccountType.Debit;
 		account.changeAccountType(newType);
 	}
 }

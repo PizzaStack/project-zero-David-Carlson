@@ -9,11 +9,14 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import sylvernale.bank.entity.Account;
+import sylvernale.bank.entity.AccountApplication;
+import sylvernale.bank.entity.AccountType;
 import sylvernale.bank.entity.User;
 
 public class Database {
 	protected Map<String, User> usersMap;
-	protected Map<Integer, Account> accountsMap;
+	protected List<Account> accountsList;
+	protected List<AccountApplication> accountApps;
 	protected String dataFilePath = "./data";
 	protected String loggingPath = "./logs";
 	protected String loadPath;
@@ -24,7 +27,7 @@ public class Database {
 	public Database() {
 		// TODO: Create Separate constructor which reads from file
 		usersMap = new TreeMap<String, User>();
-		accountsMap = new TreeMap<Integer, Account>();
+		accountsList = new ArrayList<Account>();
 	}
 
 	public Database(String loadPath, String savePath) {
@@ -36,7 +39,7 @@ public class Database {
 
 		if (loadPath == null) {
 			usersMap = new TreeMap<String, User>();
-			accountsMap = new TreeMap<Integer, Account>();
+			accountsList = new ArrayList<Account>();
 		} else {
 			// TODO: Load files, add logging
 		}
@@ -69,13 +72,27 @@ public class Database {
 	public int getNextUserID() {
 		return nextUserID++;
 	}
-	
+
+	private int getNextAccountID() {
+		return nextAccountID++;
+	}
+
 	public List<Account> getAllUserAccounts(List<Integer> accountIDs) {
 		List<Account> accounts = new ArrayList<Account>();
-		for (Integer id : accountIDs){
-			accounts.add(accountsMap.get(id));
+		for (Integer id : accountIDs) {
+			accounts.add(accountsList.get(id));
 		}
 		return accounts;
+	}
+
+	public void addAccountApp(AccountType type, User owner) {
+		accountApps.add(new AccountApplication(type, owner));
+	}
+
+	public void addAccount(AccountType type, User owner) {
+		Account account = new Account(owner, getNextAccountID(), 0, type);
+		owner.addAccount(account);
+		accountsList.add(account);
 	}
 
 }

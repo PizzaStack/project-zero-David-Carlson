@@ -11,11 +11,11 @@ public class User {
 	protected String password;
 	protected int userID;
 	protected Permissions permission;
-	protected List<Integer> accounts;
+	protected List<Account> accounts;
 
 	public User() {
 		permission = Permissions.None;
-		accounts = new ArrayList<Integer>();
+		accounts = new ArrayList<Account>();
 	}
 
 	public User(UserInfo info, String username, String password, int userID) {
@@ -24,7 +24,7 @@ public class User {
 		this.password = password;
 		this.userID = userID;
 		permission = Permissions.User;
-		accounts = new ArrayList<Integer>();
+		accounts = new ArrayList<Account>();
 	}
 
 	public String getUsername() {
@@ -45,6 +45,14 @@ public class User {
 
 	public String getPassword() {
 		return password;
+	}
+
+	public List<Account> getAccounts() {
+		return accounts;
+	}
+
+	public void addAccount(Account account) {
+		accounts.add(account);		
 	}
 
 	// Creation Date

@@ -8,9 +8,6 @@ public class Account {
 	protected int accountID;
 	protected double balance;
 	protected AccountType accountType;
-	public enum AccountType {
-		Credit, Debit
-	};
 	
 	public Account() {
 		owners = new ArrayList<User>();
@@ -18,19 +15,26 @@ public class Account {
 	}
 	
 	public Account(User owner, int accountID, double startingBalance, AccountType accountType) {
-		this();
+		owners = new ArrayList<User>();
 		owners.add(owner);
 		balance = startingBalance;
 		this.accountType = accountType;
 	}
-	@Override
-	public String ToString() {
-		String type = accountType == AccountType.Debit ? "Debit" : "Credit";
-//		String owners = 
-//		String.format("Account #%s - Type: %s - Balance, args)
-		// TODO: Finish
-	}
 	
+	@Override
+	public String toString() {
+		String type = accountType == AccountType.Debit ? "Debit" : "Credit";
+		String ownersString = "";
+		for (User owner : owners)
+			ownersString += owner.getFullName() + ", ";
+		
+		return String.format("Account #%s - Type: %s - Balance: %s - Owner/s: %s", 
+				accountID, type, balance, ownersString);
+	}	
+	public Double withdrawAmount(Double requestedAmount) {
+		
+		Double newBalance = Math.max(a, b)
+	}
 	
 	public List<User> getOwners() {
 		return owners;

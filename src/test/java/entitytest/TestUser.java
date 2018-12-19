@@ -9,13 +9,15 @@ import org.junit.Before;
 
 public class TestUser {
 	UserInfo userInfo;
-	int accountID = 1234;
+	String username = "Boromir";
+	String password = "Give me the ring";
+	int userID = 1234;
 	User user;
 	
 	@Before 
 	public void setupTest() {
 		userInfo = new UserInfo("Sean", "Bean", "123456789", "5 Guy Drive");
-		user = new User(userInfo, accountID);
+		user = new User(userInfo, username, password, userID);
 	}
 	
 	@Test
