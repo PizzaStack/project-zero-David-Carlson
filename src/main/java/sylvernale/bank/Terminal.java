@@ -1,6 +1,7 @@
 package sylvernale.bank;
 
 import java.security.InvalidParameterException;
+import java.sql.Connection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -11,7 +12,7 @@ import sylvernale.bank.entity.UserInfo;
 import sylvernale.bank.entity.AccountType;
 
 public class Terminal {
-
+	public static Connection connection;
 	protected Database database;
 	protected State state;
 
@@ -102,7 +103,7 @@ public class Terminal {
 	}
 
 	public User runLogin() throws Exception {
-		System.out.println("Login Screen: \n");
+		System.out.println("User Login Screen: \n");
 
 		while (true) {
 			System.out.println("Enter 'leave' to return to splashscreen: ");
@@ -191,9 +192,6 @@ public class Terminal {
 		}
 	}
 
-
-
-
 	public void runUserLoggedIn(User currentUser) {
 
 		while (state != State.Exiting) {
@@ -250,7 +248,58 @@ public class Terminal {
 		}
 	}
 	private void runDealerLoggedIn(User currentUser) {
-		// TODO Auto-generated method stub
+		while (state != State.Exiting) {
+			// Basic login info
+			System.out.println("\n\n-----------------------------------------------------");
+			System.out.println("Dealer Portal  -- " + currentUser.getUsername());
+			List<Account> userAccounts = currentUser.getAccounts();
+			if (userAccounts.size() == 0) {
+				System.out.println("\tYou have no approved accounts :( ");
+			} else {
+				System.out.println("\tAccounts: ");
+				for (Account account : userAccounts)
+					System.out.println("\t\t" + account.toString());
+			}
+
+			// Commands to try on account
+			System.out.println("\nEnter 'apply' to request a new account");
+			System.out.println("Enter 'join' to apply for joint access");
+			if (userAccounts.size() != 0)
+				System.out.println("Enter 'transact' to withdraw/deposit money into/from our Casino");
+			if (userAccounts.size() > 1)
+				System.out.println("Enter 'transfer' to move money between accounts at our Casino");
+			System.out.println("Enter 'leave' to logout");
+			System.out.println("Enter 'exit' to stop the program");
+
+			String input = scanner.nextLine();
+			switch (input) {
+			case "apply":
+				applyForAccount(currentUser);
+				break;
+			case "join":
+				applyForJointAccount();
+				break;
+			case "transact":
+				if (userAccounts.size() != 0)
+					transactWithOneAccount(userAccounts);
+				else
+					System.out.println("Invalid command");
+				break;
+			case "transfer":
+				if (userAccounts.size() >= 2) 					
+					tranferBetweenAccounts(userAccounts);
+				else
+					System.out.println("Invalid command");
+				break;
+			case "leave":
+				System.out.println("Logging out...");
+				state = State.SplashScreen;
+				return;
+			case "exit":
+				state = State.Exiting;
+				return;
+			}
+		}
 
 	}
 
@@ -362,10 +411,11 @@ public class Terminal {
 				System.out.println("Malformed statement, ending transaction");
 				return;
 			}
-			// If 
+			// TODO: Replace all with connection call?
 			if (accounts.stream().anyMatch(A -> A.getAccountID() == account1|| A.getAccountID() == account2)
 					&& account1 != account2) {
-				System.out.println(account1 + "-" + account2);
+				
+				
 				
 			}
 			else {

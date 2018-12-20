@@ -1,13 +1,6 @@
 package sylvernale.bank;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
-
-import sylvernale.bank.entity.Account;
-import sylvernale.bank.entity.AccountType;
-import sylvernale.bank.entity.User;
 
 
 public class App 
