@@ -5,16 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Account {
-	protected List<User> owners;
+	protected List<User> owners = new ArrayList<User>();
 	protected int accountID;
 	protected double balance;
 	
 	public Account() {
-		owners = new ArrayList<User>();
 	}
 	
 	public Account(User owner, int accountID, double startingBalance) {
-		owners = new ArrayList<User>();
+		this.accountID = accountID;
 		owners.add(owner);
 		balance = startingBalance;
 	}
@@ -25,16 +24,24 @@ public class Account {
 		for (User owner : owners)
 			ownersString += owner.getFullName() + ", ";
 		
-		return String.format("Account #%s - Type: %s - Balance: %s - Owner/s: %s", 
+		return String.format("Account #%s  - Balance: %s - Owner/s: %s", 
 				accountID, balance, ownersString);
 	}	
 	
 	public void withdrawAmount(Double requestedAmount) {
 		if (requestedAmount < 0)
-			throw new InvalidParameterException("Withdrawal amount is negative");
+			throw new InvalidParameterException("You cannot withdraw a negative amount!!");
 		if (requestedAmount > balance)
-			throw new InvalidParameterException("Withdrawing more money than owned");
+			throw new InvalidParameterException("You cannot withdraw more than you have!!");
+		balance -= requestedAmount;
 		System.out.println("You successfully withdrew $" + requestedAmount.toString());
+	}
+	public void depositAmount(Double givenAmount) {
+		if (givenAmount < 0)
+			throw new InvalidParameterException("You cannot deposit a negative amount!!");
+		balance += givenAmount;
+		// TODO: Format significant figures
+		System.out.println("You succesfully deposited $" + givenAmount.toString());		
 	}
 	
 	public List<User> getOwners() {
@@ -58,5 +65,7 @@ public class Account {
 		if (!owners.contains(newOwner))
 			owners.add(newOwner);		
 	}
+
+
 
 }

@@ -17,7 +17,7 @@ public class TestUser {
 	@Before 
 	public void setupTest() {
 		userInfo = new UserInfo("Sean", "Bean", "123456789", "5 Guy Drive");
-		user = new User(userInfo, username, password, userID);
+//		user = new User(userInfo, username, password, userID);
 	}
 	
 	@Test

@@ -73,7 +73,4 @@ public class UserInfo {
 		else
 			throw new InvalidParameterException(address + " isn't a valid address");
 	}
-	
-
-
 }

@@ -14,22 +14,19 @@ import sylvernale.bank.entity.AccountType;
 import sylvernale.bank.entity.User;
 
 public class Database {
-	protected Map<String, User> usersMap;
-	protected Map<Integer, Account> accountsMap;
-	protected List<AccountApplication> accountApps;
+	protected Map<String, User> usersMap = new TreeMap<String, User>();
+	protected Map<Integer, Account> accountsMap = new TreeMap<Integer, Account>();
+	protected List<AccountApplication> accountApps = new ArrayList<AccountApplication>();
 	protected String dataFilePath = "./data";
 	protected String loggingPath = "./logs";
 	protected String loadPath;
 	protected String savePath;
-	protected int nextUserID;
-	protected int nextAccountID;
+	protected int nextUserID = 0;
+	protected int nextAccountID = 0;
 
 	public Database() {
-		// TODO: Create Separate constructor which reads from file
-		usersMap = new TreeMap<String, User>();
-		accountsMap = new TreeMap<Integer, Account>();
+		
 	}
-
 	public Database(String loadPath, String savePath) {
 		Path root = Paths.get(System.getProperty("user.dir"));
 		if (loadPath != null)
@@ -37,13 +34,9 @@ public class Database {
 		if (savePath != null)
 			this.savePath = Paths.get(root.toString(), savePath).toString();
 
-		if (loadPath == null) {
-			usersMap = new TreeMap<String, User>();
-			accountsMap = new TreeMap<Integer, Account>();
-		} else {
-			// TODO: Load files, add logging
+		if (loadPath != null) {
+			// Add code to load
 		}
-
 	}
 
 	public void addUser(User user) {
@@ -53,32 +46,31 @@ public class Database {
 		else
 			usersMap.put(username, user);
 	}
-
-	public Boolean containsUser(String username, String password) {
-		return usersMap.containsKey(username) && usersMap.get(username).getPassword().equals(password);
-	}
-
-	public Boolean isAccountOwnedByUser(int accountID, String username, String password){
-		if (accountsMap.containsKey(accountID)){
-			Account account = accountsMap.get(accountID);
-			for (User owner : account.getOwners()){
-				if (owner.getUsername().equals(username) && owner.getPassword().equals(password)){
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	public Boolean containsUser(String username) {
-		return usersMap.containsKey(username);
-	}
-
 	public User getUser(String username) throws Exception {
 		if (usersMap.containsKey(username))
 			return usersMap.get(username);
 		else
 			throw new Exception("Attempted to get non-existant user: " + username);
+	}
+
+	public Boolean containsUser(String username, String password) {
+		password = User.hashPassword(password);
+		return usersMap.containsKey(username) && usersMap.get(username).getPassword().equals(password);
+	}
+	public Boolean containsUser(String username) {
+		return usersMap.containsKey(username);
+	}
+
+	public Boolean isAccountOwnedByUser(int accountID, String username, String password) {
+		if (accountsMap.containsKey(accountID)) {
+			Account account = accountsMap.get(accountID);
+			for (User owner : account.getOwners()) {
+				if (owner.getUsername().equals(username) && owner.getPassword().equals(password)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public int getNextUserID() {
@@ -101,8 +93,8 @@ public class Database {
 		accountApps.add(new AccountApplication(owner));
 	}
 
-	public void addAccount(AccountType type, User owner) {
-		Account account = new Account(owner, getNextAccountID(), 0);
+	public void addAccount(User owner) {
+		Account account = new Account(owner, getNextAccountID(), 100);
 		owner.addAccount(account);
 		accountsMap.put(account.getAccountID(), account);
 	}
