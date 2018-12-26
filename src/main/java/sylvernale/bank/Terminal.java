@@ -2,10 +2,16 @@ package sylvernale.bank;
 
 import java.security.InvalidParameterException;
 import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+import dao.AccountDao;
+import dao.UserDao;
 import sylvernale.bank.entity.Account;
 import sylvernale.bank.entity.User;
 import sylvernale.bank.entity.UserInfo;
@@ -26,19 +32,77 @@ public class Terminal {
 	public Terminal(Scanner scanner) {
 		this.scanner = scanner;
 		database = new Database();
-		fillDatabase();
 		state = State.SplashScreen;
+		
+		String url = "jdbc:postgresql://baasu.db.elephantsql.com:5432/kyhsxtgj";
+    	String user = "kyhsxtgj";
+    	String password = "a41I5riPacnHC9tuzW8xs0GyramwRr-G";
+    	try { Terminal.connection = DriverManager.getConnection(url, user, password); }
+    	catch(Exception e) {
+    		System.out.println(e.getMessage());
+    	}
+	}
+	
+	public void recreateDatabases() {
+		String[] dropStatements = {				
+				"drop table IF EXISTS accountapps;",
+				"drop table IF EXISTS jointowners;",
+				"drop table IF EXISTS accounts;",
+				"drop table IF EXISTS users;"};
+		
+		String[] createStatements = {
+				"create table users ("
+				+ "id serial primary key, username varchar(50) unique, password varchar(50), permission varchar(20), "
+				+ "firstname varchar(50), lastname varchar(50), social varchar(9), address varchar(100));",
+				 
+				"create table accounts ( "
+				+ "id serial primary key, "
+				+ "user_id serial references users(id) not NULL,"
+				+ "balance real not NULL);",
+				
+				"create table jointowners ( "
+				+ "acc_id serial references accounts(id) not NULL,"
+				+ "user_id serial references users(id) not NULL,"
+				+ "primary key(acc_id, user_id));",
+				
+				"create table accountapps ("
+				+ "id serial primary key, "
+				+ "state varchar(20), "
+				+ "user_id serial references users(id), "
+				+ "balance real not NULL);"};		
+//		"create table accountowners ("
+//		+ "acc_id serial references accounts(id),"
+//		+ "user_id serial references users(id),"
+//		+ "primary key(acc_id, user_id));",
+		try (Statement statement = connection.createStatement()) {
+			for (String drop : dropStatements) {
+				try { statement.executeUpdate(drop);}	
+				catch(SQLException e) {System.out.println("Error creating table: " + e.getMessage());}
+			}				
+			for (String create : createStatements) {
+				try { statement.executeUpdate(create);}	
+				catch(SQLException e) {System.out.println("Error creating table: " + e.getMessage());}
+			}
+				
+		}
+		catch(Exception e) {
+			System.out.println(e.getMessage());
+		}		
 	}
 
+
 	public void fillDatabase() {
-		String[] names = { "user0", "user1", "dealer", "pitboss" };
-		Permissions[] permissions = { Permissions.User, Permissions.User, Permissions.Dealer, Permissions.Pitboss };
+		String[] names = { "u0", "u1", "d0", "d1", "p0", "p1" };
+		Permissions[] permissions = { 
+				Permissions.User, Permissions.User, 
+				Permissions.Dealer, Permissions.Dealer, 
+				Permissions.Pitboss, Permissions.Pitboss };
 		for (int i = 0; i < names.length; i++) {
 			String n = names[i];
 			User user = new User(i, n, n, permissions[i], n, n, n, n);
-			database.addUser(user);
-			database.addAccount(user);
-			database.addAccount(user);
+			UserDao.addUser(user);
+			AccountDao.addAccount(user);
+//			AccountDao.addAccount(user);
 		}
 	}
 
@@ -57,11 +121,9 @@ public class Terminal {
 				break;
 			case LoggingIn:
 				currentUser = runLogin();
-				System.out.println("current is now " + currentUser.toString());
 				break;
 			case AccountCreation:
 				currentUser = runAccountCreation();
-
 				break;
 			case LoggedIn:
 				runLoggedIn(currentUser);
@@ -106,9 +168,10 @@ public class Terminal {
 		System.out.println("User Login Screen: \n");
 
 		while (true) {
+			System.out.println("Enter your Username to begin login: ");
 			System.out.println("Enter 'leave' to return to splashscreen: ");
 			System.out.println("Enter 'exit' to terminate the program: ");
-			System.out.println("Enter your Username to begin login: ");
+			
 
 			String input = scanner.nextLine();
 			if (input.equals("leave")) {
@@ -120,18 +183,18 @@ public class Terminal {
 				return null;
 			}
 
-			// TODO: If database doesn't contain name, message and continue
 			String username = input;
 			System.out.println("Enter your password: ");
 			String password = scanner.nextLine();
-
-			if (database.containsUser(username, password)) {
-				User user = database.getUser(username);
+			
+			User user = UserDao.getUser(username, password);
+			if (user != null) {
 				String name = user.getUserInfo().getFirstName();
 				System.out.println("Welcome, " + name + ".");
 				state = State.LoggedIn;
-				return user;
-			} else
+				return user;				
+			}
+			else
 				System.out.println("Invalid credentials, please try again.");
 		}
 	}
@@ -142,7 +205,7 @@ public class Terminal {
 		do {
 			System.out.println("Enter your desired username: ");
 			username = scanner.nextLine();
-		} while (!UserInfo.isNameValid(username) || database.containsUser(username));
+		} while (!UserInfo.isNameValid(username) || UserDao.containsUsername(username));
 		do {
 			System.out.println("Enter your password: ");
 			password = scanner.nextLine();
@@ -165,11 +228,9 @@ public class Terminal {
 		} while (!UserInfo.isAddressValid(address));
 
 		UserInfo userInfo = new UserInfo(fname, lname, social, address);
-
-		// I'm 'protecting' the password
 		User user = new User(database.getNextUserID(), username, password, Permissions.User, fname, lname, social,
 				address);
-		database.addUser(user);
+		UserDao.addUser(user);
 		System.out.println("User account created! Logging in...");
 		state = State.LoggedIn;
 		return user;
@@ -197,14 +258,14 @@ public class Terminal {
 		while (state != State.Exiting) {
 			// Basic login info
 			System.out.println("\n\n-----------------------------------------------------");
-			System.out.println("User Portal  -- " + currentUser.getUsername());
-			List<Account> userAccounts = currentUser.getAccounts();
+			System.out.println("User Portal  -- Logged in as " + currentUser.getUsername());
+			List<Account> userAccounts = AccountDao.getUserAccounts(currentUser);
 			if (userAccounts.size() == 0) {
-				System.out.println("\tYou have no approved accounts :( ");
+				System.out.println("   You have no approved accounts :( ");
 			} else {
-				System.out.println("\tAccounts: ");
+				System.out.println("   Accounts: ");
 				for (Account account : userAccounts)
-					System.out.println("\t\t" + account.toString());
+					System.out.println("      " + account.toString());
 			}
 
 			// Commands to try on account
@@ -262,12 +323,11 @@ public class Terminal {
 			}
 
 			// Commands to try on account
-			System.out.println("\nEnter 'apply' to request a new account");
-			System.out.println("Enter 'join' to apply for joint access");
 			if (userAccounts.size() != 0)
 				System.out.println("Enter 'transact' to withdraw/deposit money into/from our Casino");
 			if (userAccounts.size() > 1)
 				System.out.println("Enter 'transfer' to move money between accounts at our Casino");
+			// Go through 
 			System.out.println("Enter 'leave' to logout");
 			System.out.println("Enter 'exit' to stop the program");
 
@@ -438,6 +498,19 @@ public class Terminal {
 
 	public void setScanner(Scanner scanner) {
 		this.scanner = scanner;
+	}
+	
+	@Override
+	public void finalize() {
+		if (connection != null) {
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.out.println("Connection not closed: " + e.getMessage());
+			}
+		}
 	}
 
 }

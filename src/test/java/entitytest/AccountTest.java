@@ -49,21 +49,8 @@ public class AccountTest {
 		double balanceDelta = 1500;
 		account.withdrawAmount(balanceDelta);
 		assertEquals(account.getBalance(), 0, 0.01);
-	}
-	
-	@Test
-	public void testGetOwners() {
-		List<User> owners = account.getOwners();
-		assertTrue(owners.contains(user));
-	}
-	
-	@Test
-	public void testAddOwner() {
-		User user2 = new User();
-		account.addOwner(user2);
-		List<User> users = account.getOwners();
-		assertTrue(users.contains(user2));
-	}
+	}	
+
 	@Test 
 	public void testContainsUser() {
 		assertTrue(account.containsOwner(user));

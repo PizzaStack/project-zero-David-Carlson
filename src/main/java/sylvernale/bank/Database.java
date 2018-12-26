@@ -64,11 +64,11 @@ public class Database {
 	public Boolean isAccountOwnedByUser(int accountID, String username, String password) {
 		if (accountsMap.containsKey(accountID)) {
 			Account account = accountsMap.get(accountID);
-			for (User owner : account.getOwners()) {
-				if (owner.getUsername().equals(username) && owner.getPassword().equals(password)) {
-					return true;
-				}
-			}
+//			for (User owner : account.getOwners()) {
+//				if (owner.getUsername().equals(username) && owner.getPassword().equals(password)) {
+//					return true;
+//				}
+//			}
 		}
 		return false;
 	}
@@ -95,7 +95,7 @@ public class Database {
 
 	public void addAccount(User owner) {
 		Account account = new Account(owner, getNextAccountID(), 100);
-		owner.addAccount(account);
+//		owner.addAccount(account);
 		accountsMap.put(account.getAccountID(), account);
 	}
 
