@@ -9,14 +9,14 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import sylvernale.bank.entity.Account;
-import sylvernale.bank.entity.AccountApplication;
+import sylvernale.bank.entity.AccountApp;
 import sylvernale.bank.entity.AccountType;
 import sylvernale.bank.entity.User;
 
 public class Database {
 	protected Map<String, User> usersMap = new TreeMap<String, User>();
 	protected Map<Integer, Account> accountsMap = new TreeMap<Integer, Account>();
-	protected List<AccountApplication> accountApps = new ArrayList<AccountApplication>();
+	protected List<AccountApp> accountApps = new ArrayList<AccountApp>();
 	protected String dataFilePath = "./data";
 	protected String loggingPath = "./logs";
 	protected String loadPath;
@@ -90,7 +90,7 @@ public class Database {
 	}
 
 	public void addAccountApp(User owner) {
-		accountApps.add(new AccountApplication(owner));
+//		accountApps.add(new AccountApp(owner));
 	}
 
 	public void addAccount(User owner) {

@@ -11,7 +11,7 @@ import dao.UserDao;
 public class Account {
 	protected int accountID;
 	protected int user_id;
-	protected Integer joint_owner;
+	protected List<Integer> joint_owners;
 	protected double balance;
 
 	public Account() {
@@ -21,24 +21,27 @@ public class Account {
 		this.accountID = accountID;
 		user_id = owner.getUserID();
 		balance = startingBalance;
-		joint_owner = null;
+		joint_owners = new ArrayList<Integer>();
 	}
 
 	public Account(ResultSet resultSet) throws SQLException {
 		this.accountID = resultSet.getInt("id");
 		this.balance = resultSet.getDouble("balance");
 		this.user_id = resultSet.getInt("user_id");
-		this.joint_owner = null;
+		this.joint_owners = new ArrayList<Integer>();
+		// TODO: new SQL query
 	}
 
 	@Override
 	public String toString() {
 		String margin = "\n         ";
 		String ownersString = margin + "   " + UserDao.getUser(user_id).toPrettyString();
-		if (joint_owner != null)
-			ownersString += margin  + "   " + UserDao.getUser(joint_owner).toPrettyString();
-
-		return String.format("Account #%s - Balance: %s %sOwner/s: %s", accountID, balance, margin, ownersString);
+		if (joint_owners.size() > 0) {
+			ownersString += margin + "Joint-Owners";
+			for (Integer joint_owner : joint_owners)
+				ownersString += margin  + "   " + UserDao.getUser(joint_owner).toPrettyString();
+		}
+		return String.format("Account #%s - Balance: %s %sOwner: %s", accountID, balance, margin, ownersString);
 	}
 
 	public void withdrawAmount(Double requestedAmount) {
@@ -55,21 +58,27 @@ public class Account {
 		if (givenAmount < 0)
 			throw new InvalidParameterException("You cannot deposit a negative amount!!");
 		balance += givenAmount;
-		// TODO: Format significant figures
+		// TODO: Format significant figures, DAO
 		System.out.println("You succesfully deposited $" + givenAmount.toString());
 	}
 
 	public boolean containsOwner(User user) {
 		if (user.getUserID() == user_id)
 			return true;
-		else if (joint_owner != null && user.getUserID() == joint_owner)
+		else if (joint_owners.contains(user.getUserID()))
 			return true;
 		else
 			return false;
 	}
+	
+	// Getters and setters :  ************************************************************************************
 
 	public int getAccountID() {
 		return accountID;
+	}
+	
+	public int getUser_ID() {
+		return user_id;
 	}
 
 	public Double getBalance() {

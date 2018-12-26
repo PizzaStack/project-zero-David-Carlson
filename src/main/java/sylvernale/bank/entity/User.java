@@ -9,19 +9,25 @@ import dao.AccountDao;
 import sylvernale.bank.Permissions;
 
 public class User {
-	protected int userID;
+	protected Integer userID;
 	protected String username;
 	public String password;
 	protected Permissions permission;
 	protected UserInfo info;
 	protected List<Integer> accounts;
+	protected List<Integer> accountApps;
 
 	public User() {
 		permission = Permissions.User;
 		accounts = new ArrayList<Integer>();
 	}
+	
+//	public User(String username, String password, Permissions permission, String firstName, String lastName,
+//			String socialSecurityNumber, String address) {
+//		this(null, password, permission, firstName, lastName, socialSecurityNumber, address);
+//	}
 
-	public User(int userID, String username, String password, Permissions permission, String firstName, String lastName,
+	public User(Integer userID, String username, String password, Permissions permission, String firstName, String lastName,
 			String socialSecurityNumber, String address) {
 		this.userID = userID;
 		this.username = username;
@@ -30,6 +36,7 @@ public class User {
 		this.info = new UserInfo(firstName, lastName, socialSecurityNumber, address);
 
 		accounts = new ArrayList<Integer>();
+		accountApps = new ArrayList<Integer>();
 	}
 
 	public User(ResultSet rs) throws SQLException {

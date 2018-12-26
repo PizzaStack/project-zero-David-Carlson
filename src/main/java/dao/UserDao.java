@@ -18,8 +18,7 @@ public final class UserDao {
 	// Maps userIDs to users for caching purposes
 	private static Map<Integer, User> userMap = new TreeMap<Integer, User>();
 
-	
-	public static User getUser(String username) {	
+	public static User getUser(String username) {
 		String sql = String.format("select * from users where username='%s'", username);
 		try (Statement statement = Terminal.connection.createStatement();
 				ResultSet resultSet = statement.executeQuery(sql)) {
@@ -32,7 +31,7 @@ public final class UserDao {
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 		}
-		return null;		
+		return null;
 	}
 
 	public static User getUser(String username, String password) {
@@ -51,6 +50,7 @@ public final class UserDao {
 		}
 		return null;
 	}
+
 	public static User getUser(int userID) {
 		if (userMap.containsKey(userID)) {
 			return userMap.get(userID);
@@ -84,17 +84,25 @@ public final class UserDao {
 		}
 		return users;
 	}
-	
+
 	public static Boolean containsUsername(String username) {
-		String sql = String.format("select * from users where username='%s';", username);
-		try (Statement statement = Terminal.connection.createStatement();) {
-			return statement.executeUpdate(sql) == 1;
-		
+		String sql = String.format("select count(*) as users_with_name from users where username='%s';", username);
+		try (Statement statement = Terminal.connection.createStatement();
+				ResultSet resultSet = statement.executeQuery(sql)) {
+			if (resultSet.next()) {
+				int users_with_name = resultSet.getInt("users_with_name");
+				System.out.println("Users with name: " + users_with_name);
+				return users_with_name != 0;
+			}
+			else
+				throw new SQLException("No rows returned from containsUsername query");
+
 		} catch (SQLException e) {
-			System.out.println(e.getMessage());
+			System.out.println("ContainsUsername error: " + e.getMessage());
 		}
 		return false;
 	}
+	
 
 	public static void addUser(User user) {
 		UserInfo i = user.getUserInfo();
@@ -110,8 +118,7 @@ public final class UserDao {
 					int user_id = resultSet.getInt("id");
 					user.setUserID(user_id);
 					userMap.put(user_id, user);
-				}
-				else
+				} else
 					throw new SQLException("Couldn't retrieve user_id after adding new user");
 			}
 		} catch (SQLException e) {

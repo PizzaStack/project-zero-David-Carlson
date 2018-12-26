@@ -10,10 +10,10 @@ public class App
 {
     public static void main( String[] args )
     {
-    	Terminal term = new Terminal(new Scanner(System.in));
-    	term.recreateDatabases();
-    	term.fillDatabase();
-    	try {
+    	System.err.println("Standard error line");
+    	try (Terminal term = new Terminal(new Scanner(System.in))) {
+    		term.recreateDatabases();
+        	term.fillDatabase();
 			term.runTerminal();
 
 //    		User user = UserDao.getUser("u0");
