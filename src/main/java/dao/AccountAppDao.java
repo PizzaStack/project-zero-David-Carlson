@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import sylvernale.bank.Terminal;
 import sylvernale.bank.entity.AccountApp;
@@ -19,59 +20,72 @@ public class AccountAppDao {
 				ResultSet resultSet = statement.executeQuery(sql);) {
 			while (resultSet.next())
 				accountApps.add(new AccountApp(resultSet));
-			
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return accountApps;		
-	}
-	
-	public static List<AccountApp> getPendingAccountAppsWithSimilarUsername(String username) {
-		return null;
-	}
-	
-	public static List<AccountApp> getUserAccountApps(int user_id) {
-		List<AccountApp> accountApps = new ArrayList<AccountApp>();
-		try (PreparedStatement statement = Terminal.connection.prepareStatement(
-				"select * from accountapps where user_id=?")) {
-			statement.setInt(1, user_id);
-			try (ResultSet resultSet = statement.executeQuery()) {
-				while (resultSet.next())
-					accountApps.add(new AccountApp(resultSet));
-			}
-			
+
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return accountApps;
 	}
-	
+
+	public static List<AccountApp> getPendingAccountAppsWithSimilarUsername(String username) {
+		return null;
+	}
+
+	public static List<AccountApp> getUserAccountApps(int user_id) {
+		List<AccountApp> accountApps = new ArrayList<AccountApp>();
+		try (PreparedStatement statement = Terminal.connection
+				.prepareStatement("select * from accountapps where user_id=?")) {
+			statement.setInt(1, user_id);
+			try (ResultSet resultSet = statement.executeQuery()) {
+				while (resultSet.next())
+					accountApps.add(new AccountApp(resultSet));
+			}
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return accountApps;
+	}
+
 	public static void addAccountApp(int user_id, double balance) {
-		try (PreparedStatement statement = Terminal.connection.prepareStatement(
-				"insert into accountapps (user_id, state, balance) values (?,?,?)")) {
-			statement.setInt(1, user_id); 
+		try (PreparedStatement statement = Terminal.connection
+				.prepareStatement("insert into accountapps (user_id, state, balance) values (?,?,?)")) {
+			statement.setInt(1, user_id);
 			statement.setString(2, "Pending");
 			statement.setDouble(3, balance);
 			int rows_affected = statement.executeUpdate();
 			if (rows_affected != 1)
 				throw new SQLException("AddAccountApp didn't affect 1 row");
-			
+
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-//	try (PreparedStatement statement = Terminal.connection.prepareStatement(
-//			"select * from accounts where user_id < ?;");) {
-//	statement.setInt(1, 3);
-//	try (ResultSet resultSet = statement.executeQuery();){
-//		
-//	}
-//	} catch (SQLException e) {
-//		// TODO Auto-generated catch block
-//		e.printStackTrace();
-//	}
+	public static void changeAccountAppState(AccountApp app, String newState) {
+		app.setState(newState);
+		String updateApp = "update accountapps set state=? where id=?";
+		try (PreparedStatement statement = Terminal.connection.prepareStatement(updateApp)) {
+			statement.setString(1, newState);
+			statement.setInt(2, app.getUserID());
+			if (statement.executeUpdate() != 1)
+				throw new SQLException("Approved app didn't get updated correctly");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.err.println(e.getMessage());
+		}
+		if (newState.equals("Approved")) {
+			AccountDao.addAccount(app.getUserID(), app.getBalance());
+		}
+
+	}
+
+	public static List<AccountApp> filterForAppState(List<AccountApp> allApplications, String state) {
+		return allApplications.stream().filter(A -> A.getState().equals(state)).collect(Collectors.toList());
+	}
+
 }

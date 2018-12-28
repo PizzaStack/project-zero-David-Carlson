@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import dao.AccountDao;
 import dao.UserDao;
 
 public class Account {
@@ -44,22 +45,23 @@ public class Account {
 		return String.format("Account #%s - Balance: %s %sOwner: %s", accountID, balance, margin, ownersString);
 	}
 
-	public void withdrawAmount(Double requestedAmount) {
-		if (requestedAmount < 0)
+	public void withdrawAmount(Double withdrawAmount) {
+		if (withdrawAmount < 0)
 			throw new InvalidParameterException("You cannot withdraw a negative amount!!");
-		if (requestedAmount > balance)
+		if (withdrawAmount > balance)
 			throw new InvalidParameterException("You cannot withdraw more than you have!!");
-		balance -= requestedAmount;
-		System.out.println("You successfully withdrew $" + requestedAmount.toString());
+		balance -= withdrawAmount;
+		AccountDao.changeAccountBalance(accountID, -withdrawAmount);
+		System.out.println("You successfully withdrew $" + withdrawAmount.toString());
 		// TODO DAO operation
 	}
 
-	public void depositAmount(Double givenAmount) {
-		if (givenAmount < 0)
+	public void depositAmount(Double depositAmount) {
+		if (depositAmount < 0)
 			throw new InvalidParameterException("You cannot deposit a negative amount!!");
-		balance += givenAmount;
-		// TODO: Format significant figures, DAO
-		System.out.println("You succesfully deposited $" + givenAmount.toString());
+		balance += depositAmount;
+		AccountDao.changeAccountBalance(accountID, depositAmount);
+		System.out.println("You succesfully deposited $" + depositAmount.toString());
 	}
 
 	public boolean containsOwner(User user) {
@@ -83,6 +85,20 @@ public class Account {
 
 	public Double getBalance() {
 		return balance;
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (other == this)
+			return true;
+		if (!(other instanceof Account))
+			return false;
+		return accountID == ((Account)other).getAccountID();			
+	}
+	
+	@Override
+	public int hashCode() {
+		return accountID;
 	}
 
 }

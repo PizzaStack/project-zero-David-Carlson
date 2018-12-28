@@ -1,20 +1,23 @@
 package sylvernale.bank;
 
+import java.security.InvalidParameterException;
+
 public enum Permissions {
 	User, 
 	Dealer, 
-	Pitboss;
+	Pitboss,
+	None;
 	
 	public static Permissions parsePermission(String permission) {
 		switch(permission) {
-		case "user":
+		case "User":
 			return Permissions.User;
-		case "dealer":
+		case "Dealer":
 			return Permissions.Dealer;
-		case "pitboss":
+		case "Pitboss":
 			return Permissions.Pitboss;
 		default:
-			return Permissions.User;
+			throw new InvalidParameterException("Permission string not correctly formatted");	
 		}
 	}
 	public String toString() {
@@ -26,7 +29,7 @@ public enum Permissions {
 		case Pitboss:
 			return "Pitboss";
 		default:
-			return "User";				
+			return "None";	
 		}
 	}
 	

@@ -30,18 +30,19 @@ public final class AccountDao {
 		}
 		return accounts;
 	}
+
 	public static void preparedStatement() {
-		try (PreparedStatement statement = Terminal.connection.prepareStatement(
-					"select * from accounts where user_id < ?;");) {
+		try (PreparedStatement statement = Terminal.connection
+				.prepareStatement("select * from accounts where user_id < ?;");) {
 			statement.setInt(1, 3);
-			try (ResultSet resultSet = statement.executeQuery();){
-				
+			try (ResultSet resultSet = statement.executeQuery();) {
+
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	public static Account getAccount(int account_id) {
@@ -55,25 +56,24 @@ public final class AccountDao {
 				accountMap.put(account.getAccountID(), account);
 				return account;
 			}
-
 		} catch (SQLException e) {
 			System.out.println("Error gettingAccount " + account_id + ", " + e.getMessage());
 			System.out.println(e.getStackTrace());
 		}
 		return null;
 	}
+	
 
-	public static void addAccount(User user) {
-		double initial_balance = 100.0;
-		String sql = String.format("insert into accounts (user_id, balance) values (%s, %s)", user.getUserID(),
-				initial_balance);
+	public static void addAccount(int userID, double initialBalance) {
+		String sql = String.format("insert into accounts (user_id, balance) values (%s, %s)", userID,
+				initialBalance);
 		try (Statement statement = Terminal.connection.createStatement()) {
 			statement.executeUpdate(sql);
 		} catch (SQLException e) {
 			System.out.println("Add account error: " + e.getMessage());
 		}
 	}
-	
+
 	public static void addJointOwnerToAccount(int account_id, int jointOwnerID) {
 		String sql = "insert into jointowners (acc_id, user_id) values(?,?);";
 		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
@@ -81,14 +81,27 @@ public final class AccountDao {
 			statement.setInt(2, jointOwnerID);
 			int rows_affected = statement.executeUpdate();
 			if (rows_affected != 1)
-				System.out.println("Error adding joint account (Do you already own this account?");
-			
+				throw new SQLException("Error adding joint account (Do you already own this account?");
+
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
+	public static void changeAccountBalance(int account_id, double balanceDelta) {
+		String sql = "update accounts set balance=balance + ? where id=?;";
+		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
+			statement.setDouble(1, balanceDelta);
+			statement.setInt(2, account_id);
+			if (statement.executeUpdate() != 1)
+				System.out.println("Error, couldn't update account");
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static Account getAccountWithUserCredentials(int account_id, String username, String user_password) {
 		user_password = User.hashPassword(user_password);
 		String sql = "select count(*) as accounts_matching, accounts.* from accounts join users on accounts.user_id=users.id "
@@ -104,10 +117,9 @@ public final class AccountDao {
 						return null;
 					else
 						return new Account(resultSet);
-				}
-				else
+				} else
 					throw new SQLException("No rows returned from getAccountWithUserCredentials query");
-			}			
+			}
 
 		} catch (SQLException e) {
 			System.out.println("ContainsUsername error: " + e.getMessage());
@@ -117,8 +129,8 @@ public final class AccountDao {
 
 	public static void addAccountWithJointOwner(User user, User joint) {
 		double initial_balance = 100.0;
-		String sql = String.format("insert into accounts (user_id, balance) values (%s, %d)",
-				user.getUserID(), joint.getUserID(), initial_balance);
+		String sql = String.format("insert into accounts (user_id, balance) values (%s, %d)", user.getUserID(),
+				joint.getUserID(), initial_balance);
 		// TODO Change this
 		try (Statement statement = Terminal.connection.createStatement()) {
 			statement.executeUpdate(sql);

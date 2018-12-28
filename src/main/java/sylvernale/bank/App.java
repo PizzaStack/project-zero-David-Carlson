@@ -11,6 +11,7 @@ public class App
     public static void main( String[] args )
     {
     	System.err.println("Standard error line");
+    	
     	try (Terminal term = new Terminal(new Scanner(System.in))) {
     		term.recreateDatabases();
         	term.fillDatabase();

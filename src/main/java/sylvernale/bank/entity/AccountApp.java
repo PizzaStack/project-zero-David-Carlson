@@ -17,9 +17,14 @@ public class AccountApp {
 		this.balance = resultSet.getDouble("balance");
 
 	}
+
 	@Override
 	public String toString() {
 		return String.format("Application #%s - Initial Balance : %s", id, balance);
+	}
+
+	public String toFullString() {
+		return String.format("%s: Application #%s - Initial Balance : %s", state, id, balance);
 	}
 
 	// Getters and setters :
@@ -35,6 +40,11 @@ public class AccountApp {
 
 	public String getState() {
 		return state;
+	}
+
+	public void setState(String state) {
+		if (state.equals("Approved") || state.equals("Denied") || state.equals("Pending"))
+			this.state = state;
 	}
 
 	public double getBalance() {

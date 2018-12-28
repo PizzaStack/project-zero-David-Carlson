@@ -5,10 +5,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import dao.AccountAppDao;
 import dao.AccountDao;
 import sylvernale.bank.Permissions;
 
-public class User {
+public class User implements Comparable<User> {
 	protected Integer userID;
 	protected String username;
 	public String password;
@@ -21,14 +22,9 @@ public class User {
 		permission = Permissions.User;
 		accounts = new ArrayList<Integer>();
 	}
-	
-//	public User(String username, String password, Permissions permission, String firstName, String lastName,
-//			String socialSecurityNumber, String address) {
-//		this(null, password, permission, firstName, lastName, socialSecurityNumber, address);
-//	}
 
-	public User(Integer userID, String username, String password, Permissions permission, String firstName, String lastName,
-			String socialSecurityNumber, String address) {
+	public User(Integer userID, String username, String password, Permissions permission, String firstName,
+			String lastName, String socialSecurityNumber, String address) {
 		this.userID = userID;
 		this.username = username;
 		this.password = User.hashPassword(password);
@@ -44,6 +40,7 @@ public class User {
 		this.username = rs.getString("username");
 		this.password = rs.getString("password");
 		this.permission = Permissions.parsePermission(rs.getString("permission"));
+
 		String fname = rs.getString("firstname");
 		String lname = rs.getString("lastname");
 		String social = rs.getString("social");
@@ -56,6 +53,7 @@ public class User {
 		return String.format("ID: %d - Username: %s - Password: %s - Permission: %s", userID, username, password,
 				permission.toString());
 	}
+
 	public String toPrettyString() {
 		return String.format("ID: %d - Username: %s - Permission: %s", userID, username, permission.toString());
 	}
@@ -96,9 +94,9 @@ public class User {
 		return accountList;
 	}
 
-//	public void addAccount(Account account) {
-//		accounts.add(account);
-//	}
+	public List<AccountApp> getAccountApps() {
+		return AccountAppDao.getUserAccountApps(this.userID);
+	}
 
 	public Permissions getPermission() {
 		return permission;
@@ -108,5 +106,22 @@ public class User {
 		return String.valueOf(password.hashCode());
 	}
 
-	// Creation Date
+	@Override
+	public boolean equals(Object other) {
+		if (other == this)
+			return true;
+		if (!(other instanceof User))
+			return false;
+		return userID == ((User) other).getUserID();
+	}
+
+	@Override
+	public int hashCode() {
+		return userID;
+	}
+
+	@Override
+	public int compareTo(User o) {
+		return username.compareTo(o.getUsername());
+	}
 }

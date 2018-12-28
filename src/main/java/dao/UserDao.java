@@ -1,12 +1,15 @@
 package dao;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import sylvernale.bank.Permissions;
 import sylvernale.bank.Terminal;
@@ -76,11 +79,27 @@ public final class UserDao {
 		try (Statement statement = Terminal.connection.createStatement();
 				ResultSet resultSet = statement.executeQuery(sql)) {
 
-			while (resultSet.next()) {
+			while (resultSet.next()) 
 				users.add(new User(resultSet));
-			}
+			
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
+		}
+		return users;
+	}
+	public static Set<User> getAllUsersLike(String likeString) {
+		Set<User> users = new TreeSet<User>();
+		String sql = "select * from users where username like ? or id like ?";
+		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
+			statement.setString(1, likeString);
+			statement.setString(2, likeString);
+			try (ResultSet resultSet = statement.executeQuery()) {
+				while (resultSet.next()) 
+					users.add(new User(resultSet));				
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return users;
 	}
