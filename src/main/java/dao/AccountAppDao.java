@@ -13,9 +13,12 @@ import sylvernale.bank.entity.AccountApp;
 import sylvernale.bank.entity.User;
 
 public class AccountAppDao {
-	public static List<AccountApp> getPendingAccountApps() {
+	
+	
+	
+	public static List<AccountApp> getPendingUserAccountApps() {
 		List<AccountApp> accountApps = new ArrayList<AccountApp>();
-		String sql = "select * from accountapps where state='Pending'";
+		String sql = "select * from accountapps join users on accountapps.user_id=users.id where state='Pending' and permission='User';";
 		try (Statement statement = Terminal.connection.createStatement();
 				ResultSet resultSet = statement.executeQuery(sql);) {
 			while (resultSet.next())
@@ -27,9 +30,35 @@ public class AccountAppDao {
 		}
 		return accountApps;
 	}
+	
+	public static List<AccountApp> getPendingUserAndDealerAccountApps() {
+		List<AccountApp> accountApps = new ArrayList<AccountApp>();
+		String sql = "select * from accountapps join users on accountapps.user_id=users.id where state='Pending' and permission!='Pitboss';";
+		try (Statement statement = Terminal.connection.createStatement();
+				ResultSet resultSet = statement.executeQuery(sql);) {
+			while (resultSet.next())
+				accountApps.add(new AccountApp(resultSet));
 
-	public static List<AccountApp> getPendingAccountAppsWithSimilarUsername(String username) {
-		return null;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return accountApps;
+	}
+	
+	public static List<AccountApp> getAllPendingAccountApps() {
+		List<AccountApp> accountApps = new ArrayList<AccountApp>();
+		String sql = "select * from accountapps where state='Pending';";
+		try (Statement statement = Terminal.connection.createStatement();
+				ResultSet resultSet = statement.executeQuery(sql);) {
+			while (resultSet.next())
+				accountApps.add(new AccountApp(resultSet));
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return accountApps;
 	}
 
 	public static List<AccountApp> getUserAccountApps(int user_id) {

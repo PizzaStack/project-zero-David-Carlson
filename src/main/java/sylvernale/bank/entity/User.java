@@ -15,12 +15,9 @@ public class User implements Comparable<User> {
 	public String password;
 	protected Permissions permission;
 	protected UserInfo info;
-	protected List<Integer> accounts;
-	protected List<Integer> accountApps;
 
 	public User() {
 		permission = Permissions.User;
-		accounts = new ArrayList<Integer>();
 	}
 
 	public User(Integer userID, String username, String password, Permissions permission, String firstName,
@@ -30,10 +27,7 @@ public class User implements Comparable<User> {
 		this.password = User.hashPassword(password);
 		this.permission = permission;
 		this.info = new UserInfo(firstName, lastName, socialSecurityNumber, address);
-
-		accounts = new ArrayList<Integer>();
-		accountApps = new ArrayList<Integer>();
-	}
+}
 
 	public User(ResultSet rs) throws SQLException {
 		this.userID = rs.getInt("id");
@@ -45,7 +39,7 @@ public class User implements Comparable<User> {
 		String lname = rs.getString("lastname");
 		String social = rs.getString("social");
 		String address = rs.getString("address");
-		info = new UserInfo(fname, lname, social, address);
+		this.info = new UserInfo(fname, lname, social, address);
 	}
 
 	@Override
@@ -84,14 +78,6 @@ public class User implements Comparable<User> {
 
 	public String getPassword() {
 		return password;
-	}
-
-	public List<Account> getAccounts() {
-		List<Account> accountList = new ArrayList<Account>();
-		for (int account : accounts) {
-			accountList.add(AccountDao.getAccount(account));
-		}
-		return accountList;
 	}
 
 	public List<AccountApp> getAccountApps() {

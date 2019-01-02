@@ -16,9 +16,9 @@ import sylvernale.bank.entity.User;
 public final class AccountDao {
 	private static Map<Integer, Account> accountMap = new TreeMap<Integer, Account>();
 
-	public static List<Account> getUserAccounts(User user) {
+	public static List<Account> getUserAccounts(int userID) {
 		List<Account> accounts = new ArrayList<Account>();
-		String sql = String.format("select * from accounts where user_id='%s';", user.getUserID());
+		String sql = String.format("select * from accounts where user_id='%s';", userID);
 		try (Statement statement = Terminal.connection.createStatement();
 				ResultSet resultSet = statement.executeQuery(sql)) {
 			while (resultSet.next()) {
@@ -31,22 +31,8 @@ public final class AccountDao {
 		return accounts;
 	}
 
-	public static void preparedStatement() {
-		try (PreparedStatement statement = Terminal.connection
-				.prepareStatement("select * from accounts where user_id < ?;");) {
-			statement.setInt(1, 3);
-			try (ResultSet resultSet = statement.executeQuery();) {
-
-			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-
 	public static Account getAccount(int account_id) {
-		if (accountMap.containsKey(accountMap))
+		if (accountMap.containsKey(account_id))
 			return accountMap.get(account_id);
 		String sql = String.format("select * from accounts where id='%s';", account_id);
 		try (Statement statement = Terminal.connection.createStatement();
@@ -62,30 +48,14 @@ public final class AccountDao {
 		}
 		return null;
 	}
-	
 
-	public static void addAccount(int userID, double initialBalance) {
-		String sql = String.format("insert into accounts (user_id, balance) values (%s, %s)", userID,
-				initialBalance);
+	public static void addAccount(int userID, String type, double initialBalance) {
+		String sql = String.format("insert into accounts (user_id, type, active, balance, money_gambled, money_won) values (%s, %s, %s, %s)",
+				userID, type, "true", initialBalance, 0, 0);
 		try (Statement statement = Terminal.connection.createStatement()) {
 			statement.executeUpdate(sql);
 		} catch (SQLException e) {
 			System.out.println("Add account error: " + e.getMessage());
-		}
-	}
-
-	public static void addJointOwnerToAccount(int account_id, int jointOwnerID) {
-		String sql = "insert into jointowners (acc_id, user_id) values(?,?);";
-		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
-			statement.setInt(1, account_id);
-			statement.setInt(2, jointOwnerID);
-			int rows_affected = statement.executeUpdate();
-			if (rows_affected != 1)
-				throw new SQLException("Error adding joint account (Do you already own this account?");
-
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 
@@ -106,6 +76,7 @@ public final class AccountDao {
 		user_password = User.hashPassword(user_password);
 		String sql = "select count(*) as accounts_matching, accounts.* from accounts join users on accounts.user_id=users.id "
 				+ "where accounts.id=? and users.username=? and users.password=?";
+
 		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
 			statement.setInt(1, account_id);
 			statement.setString(2, username);
@@ -127,16 +98,16 @@ public final class AccountDao {
 		return null;
 	}
 
-	public static void addAccountWithJointOwner(User user, User joint) {
-		double initial_balance = 100.0;
-		String sql = String.format("insert into accounts (user_id, balance) values (%s, %d)", user.getUserID(),
-				joint.getUserID(), initial_balance);
-		// TODO Change this
-		try (Statement statement = Terminal.connection.createStatement()) {
-			statement.executeUpdate(sql);
-		} catch (SQLException e) {
-			System.out.println("Add account error: " + e.getMessage());
-		}
-	}
+//	public static void addAccountWithJointOwner(User user, User joint) {
+//		double initial_balance = 100.0;
+//		String sql = String.format("insert into accounts (user_id, balance) values (%s, %d)", user.getUserID(),
+//				joint.getUserID(), initial_balance);
+//		// TODO Change this
+//		try (Statement statement = Terminal.connection.createStatement()) {
+//			statement.executeUpdate(sql);
+//		} catch (SQLException e) {
+//			System.out.println("Add account error: " + e.getMessage());
+//		}
+//	}
 
 }

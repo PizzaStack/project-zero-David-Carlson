@@ -87,12 +87,12 @@ public final class UserDao {
 		}
 		return users;
 	}
-	public static Set<User> getAllUsersLike(String likeString) {
+	public static Set<User> getUsernamesLike(String likeUsername) {
+		likeUsername = likeUsername.toLowerCase() + "%";
 		Set<User> users = new TreeSet<User>();
-		String sql = "select * from users where username like ? or id like ?";
+		String sql = "select * from users where LOWER(username) like ?";
 		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
-			statement.setString(1, likeString);
-			statement.setString(2, likeString);
+			statement.setString(1, likeUsername);
 			try (ResultSet resultSet = statement.executeQuery()) {
 				while (resultSet.next()) 
 					users.add(new User(resultSet));				
@@ -149,5 +149,4 @@ public final class UserDao {
 		// TODO: Update row
 	}
 
-	// Creation Date
 }
