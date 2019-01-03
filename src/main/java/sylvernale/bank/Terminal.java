@@ -1,5 +1,6 @@
 package sylvernale.bank;
 
+
 import java.security.InvalidParameterException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,6 +11,8 @@ import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.apache.logging.log4j.*;
 
 import dao.AccountAppDao;
 import dao.AccountDao;
@@ -25,6 +28,7 @@ public class Terminal implements AutoCloseable {
 	public static Boolean OnlyCache = false;
 	protected State state;
 	protected final String tab = "   ";
+
 
 	protected enum State {
 		SplashScreen, LoggingIn, AccountCreation, LoggedIn, Exiting
@@ -93,16 +97,33 @@ public class Terminal implements AutoCloseable {
 	}
 
 	public void fillDatabase() {
-		String[] names = { "u0", "u1", "d0", "d1", "p0", "p1" };
-		Permissions[] permissions = { Permissions.User, Permissions.User, Permissions.Dealer, Permissions.Dealer,
+		String[] unames = { "u0", "u1", "u3", "u4", "d0", "d1", "p0", "p1" };
+		String[] fnames = { "Sean", "Ms.", "John", "Beth","Tiny", "Tony", "Lika", "The" };
+		String[] lnames = { "Bean", "Frizzle", "Wick", "Any","Tim", "The Tiger", "Boss", "Wolf" };
+		String[] social = { "123456789", "223456789", "323456789", "423456789","523456789", "623456789", "723456789", "823456789" };
+		String[] addresses = { "A box", "A bigger box", "Cool hill", "A smaller box", "12 Place Lane", "You know...", "McMansion", "The Box" };
+		double[] balances = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000 };
+		double[] gambled = { 2000, 5000, 6000, 8000};
+		double[] won     = { 1800, 5100, 1000, 14000};
+		Permissions[] permissions = { Permissions.User, Permissions.User, Permissions.User, Permissions.User,Permissions.Dealer, Permissions.Dealer,
 				Permissions.Pitboss, Permissions.Pitboss };
-		for (int i = 0; i < names.length; i++) {
-			String n = names[i];
-			User user = new User(i, n, n, permissions[i], n, n, n, n);
+		for (int i = 0; i < unames.length; i++) {
+			String n = unames[i];
+			User user = new User(i, n, n, permissions[i], fnames[i], lnames[i], social[i], addresses[i]);
 			UserDao.addUser(user);
-			AccountDao.addAccount(user.getUserID(), Account.Checking, 100);
-			AccountDao.addAccount(user.getUserID(), Account.Savings, 200);
-			AccountAppDao.addAccountApp(user.getUserID(), 200.0);
+			if (i < 4) {
+				AccountDao.addAccount(user.getUserID(), AccountType.Checking, balances[i], gambled[i], won[i]);
+				AccountDao.addAccount(user.getUserID(), AccountType.Savings, balances[i] * 2);
+				AccountAppDao.addAccountApp(user.getUserID(), 200.0);
+				if (i % 2 == 1) {
+					int mainOwnerID = UserDao.getUser(unames[i-1]).getUserID();
+					JointAccountDao.addJointOwnerToAccount(AccountDao.getUserAccounts(mainOwnerID).get(0).getAccountID(), user.getUserID());
+				}
+			}
+			else {
+				AccountDao.addAccount(user.getUserID(), AccountType.Checking, balances[i]);
+				AccountDao.addAccount(user.getUserID(), AccountType.Savings, balances[i] * 2);
+			}			
 		}
 	}
 
@@ -620,9 +641,26 @@ public class Terminal implements AutoCloseable {
 	}
 
 	public void applyForAccount(User currentUser) {
+		System.out.println("What kind of account? 'checking' or 'savings'?");
+		AccountType type;
+		switch(scanner.nextLine()) {
+		case "checking":
+			type = AccountType.Checking;
+			break;
+		case "savings":
+			type = AccountType.Savings;
+			break;
+			default:
+				System.out.println("Invalid type.");
+		}
 		// TODO change to menu system?
-		AccountAppDao.addAccountApp(currentUser.getUserID(), 200.0);
-		System.out.println("Application submitted! It will be processed soon.");
+		if (currentUser.getPermission() == Permissions.User) {
+			AccountAppDao.addAccountApp(currentUser.getUserID(), type);
+			System.out.println("Application submitted! It will be processed soon.");
+		}
+		else {
+			
+		}		
 	}
 
 	public void applyForJointAccount(User currentUser) {

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import sylvernale.bank.AccountType;
 import sylvernale.bank.Terminal;
 import sylvernale.bank.entity.Account;
 import sylvernale.bank.entity.User;
@@ -62,11 +63,14 @@ public final class AccountDao {
 		}
 	}
 
-	public static void addAccount(int userID, String type, double initialBalance) {
+	public static void addAccount(int userID, AccountType type, double initialBalance) {
+		addAccount(userID, type, initialBalance, 0, 0);
+	}
+	public static void addAccount(int userID, AccountType type, double initialBalance, double money_gambled, double money_won) {
 		String sql = "insert into accounts (user_id, account_type, active, balance, money_gambled, money_won) values (?, ?, ?, ?, 0, 0);";
 		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
 			statement.setInt(1, userID);
-			statement.setString(2, type);
+			statement.setString(2, type.toString());
 			statement.setBoolean(3, true);
 			statement.setDouble(4, initialBalance);
 			if (statement.executeUpdate() != 1)

@@ -9,25 +9,24 @@ import java.util.List;
 import dao.AccountDao;
 import dao.JointAccountDao;
 import dao.UserDao;
+import sylvernale.bank.AccountType;
 
 public class Account {
 	protected int accountID;
 	protected int user_id;
-	protected String accountType;
+	protected AccountType accountType;
 	protected Boolean active;
 	protected double balance;
 	protected double moneyGambled = 0;
 	protected double moneyWon = 0;
-	public final static String Savings = "Savings";
-	public final static String Checking = "Checking";
-
+	
 	public Account() {
 	}
 
 	public Account(User owner, int accountID, double startingBalance) {
 		this.accountID = accountID;
 		user_id = owner.getUserID();
-		this.accountType = "Checking";
+		this.accountType = AccountType.Checking;
 		this.active = true;
 		balance = startingBalance;
 	}
@@ -37,14 +36,16 @@ public class Account {
 		this.balance = resultSet.getDouble("balance");
 		this.user_id = resultSet.getInt("user_id");
 		
-		this.accountType = resultSet.getString("account_type");
+		this.accountType = AccountType.parseAccountType(resultSet.getString("account_type"));
 		this.active = resultSet.getBoolean("active");
 		this.moneyGambled = resultSet.getDouble("money_gambled");
 		this.moneyWon = resultSet.getDouble("money_won");
 	}
 
 	public String toFullString(String margin, String tab) {
-		String description = String.format(margin + "Account #%s - Type - %s Balance: %s", accountID, balance);
+		String description = String.format(margin + "Account #%s - Type - %s Balance: %s", 
+				accountID, accountType.toString(), balance);
+		
 		description += "\n" + margin + tab + "Owner: ";
 		description += "\n" + margin + tab + tab + UserDao.getUser(user_id).toPrettyString();
 		
@@ -77,7 +78,6 @@ public class Account {
 		balance -= withdrawAmount;
 		AccountDao.changeAccountBalance(accountID, -withdrawAmount);
 		System.out.println("You successfully withdrew $" + withdrawAmount.toString());
-		// TODO DAO operation
 	}
 
 	public void depositAmount(Double depositAmount) {

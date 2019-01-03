@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import sylvernale.bank.AccountType;
 import sylvernale.bank.Terminal;
 import sylvernale.bank.entity.AccountApp;
 import sylvernale.bank.entity.User;
@@ -78,7 +79,7 @@ public class AccountAppDao {
 		return accountApps;
 	}
 
-	public static void addAccountApp(int user_id, double balance) {
+	public static void addAccountApp(int user_id, AccountType type) {
 		try (PreparedStatement statement = Terminal.connection
 				.prepareStatement("insert into accountapps (user_id, state, balance) values (?,?,?)")) {
 			statement.setInt(1, user_id);
@@ -108,7 +109,7 @@ public class AccountAppDao {
 			System.err.println(e.getMessage());
 		}
 		if (newState.equals("Approved")) {
-			AccountDao.addAccount(app.getUserID(), "Checking", app.getBalance());
+			AccountDao.addAccount(app.getUserID(), AccountType.Checking, app.getBalance());
 		}
 
 	}
