@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
@@ -28,6 +29,7 @@ public class Terminal implements AutoCloseable {
 	public static Boolean OnlyCache = false;
 	protected State state;
 	protected final String tab = "   ";
+	protected static Random random = new Random();
 
 
 	protected enum State {
@@ -72,8 +74,11 @@ public class Terminal implements AutoCloseable {
 				+ "user_id serial references users(id) not NULL," 
 				+ "primary key(acc_id, user_id));",
 
-				"create table accountapps (" + "id serial primary key, " + "user_id serial references users(id), "
-						+ "state varchar(20), " + "balance real not NULL);" };
+				"create table accountapps (" 
+				+ "id serial primary key, " 
+				+ "user_id serial references users(id), "
+				+ "account_type varchar(20), "
+				+ "state varchar(20));" };
 
 		try (Statement statement = connection.createStatement()) {
 			for (String drop : dropStatements) {
@@ -98,13 +103,13 @@ public class Terminal implements AutoCloseable {
 
 	public void fillDatabase() {
 		String[] unames = { "u0", "u1", "u3", "u4", "d0", "d1", "p0", "p1" };
-		String[] fnames = { "Sean", "Ms.", "John", "Beth","Tiny", "Tony", "Lika", "The" };
-		String[] lnames = { "Bean", "Frizzle", "Wick", "Any","Tim", "The Tiger", "Boss", "Wolf" };
+		String[] fnames = { "Robert", "Ms.", "John", "Joe","Tiny", "Marlon", "Robert", "The" };
+		String[] lnames = { "De Niro", "Frizzle", "Wick", "Pesci","Tim", "Brando Tiger", "Boss", "Wolf" };
 		String[] social = { "123456789", "223456789", "323456789", "423456789","523456789", "623456789", "723456789", "823456789" };
-		String[] addresses = { "A box", "A bigger box", "Cool hill", "A smaller box", "12 Place Lane", "You know...", "McMansion", "The Box" };
+		String[] addresses = { "Gangster Lane", "Paradise", "Cool hill", "Cant tell ya", "12 Place Lane", "You know...", "McMansion", "Casino Sharks Blvd." };
 		double[] balances = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000 };
 		double[] gambled = { 2000, 5000, 6000, 8000};
-		double[] won     = { 1800, 5100, 1000, 14000};
+		double[] won     = { 500, -2000, 1000, 14000};
 		Permissions[] permissions = { Permissions.User, Permissions.User, Permissions.User, Permissions.User,Permissions.Dealer, Permissions.Dealer,
 				Permissions.Pitboss, Permissions.Pitboss };
 		for (int i = 0; i < unames.length; i++) {
@@ -114,7 +119,7 @@ public class Terminal implements AutoCloseable {
 			if (i < 4) {
 				AccountDao.addAccount(user.getUserID(), AccountType.Checking, balances[i], gambled[i], won[i]);
 				AccountDao.addAccount(user.getUserID(), AccountType.Savings, balances[i] * 2);
-				AccountAppDao.addAccountApp(user.getUserID(), 200.0);
+				AccountAppDao.addAccountApp(user.getUserID(), AccountType.Checking);
 				if (i % 2 == 1) {
 					int mainOwnerID = UserDao.getUser(unames[i-1]).getUserID();
 					JointAccountDao.addJointOwnerToAccount(AccountDao.getUserAccounts(mainOwnerID).get(0).getAccountID(), user.getUserID());
@@ -157,7 +162,7 @@ public class Terminal implements AutoCloseable {
 		System.out.println("Welcome to CasinoSharks!");
 		while (state != State.Exiting) {
 			System.out.println("Enter the designated number for each service:\n");
-			System.out.println(tab + "1. Create a new Accout");
+			System.out.println(tab + "1. Create a new Account");
 			System.out.println(tab + "2. Login to interact with our system");
 			System.out.println(tab + "3. Terminate the program");
 			String input = scanner.nextLine().toLowerCase();
@@ -285,12 +290,19 @@ public class Terminal implements AutoCloseable {
 				for (Account account : userAccounts)
 					System.out.println(tab + tab + account.toPartialString(tab + tab + tab, tab));
 			}
+//			List<Account> jointAccounts = JointAccountDao.getUsersJointAccounts(currentUser.getUserID());
+//			if (userAccounts.size() != 0) {
+//				System.out.println(tab + "Joint Accounts: ");
+//				for (Account account : userAccounts)
+//					System.out.println(tab + tab + account.toPartialString(tab + tab + tab, tab));
+//			}
+//			userAccounts.addAll(jointAccounts);
 
 			// Change to method?
 			List<AccountApp> userAccountApps = AccountAppDao.getUserAccountApps(currentUser.getUserID());
 			List<AccountApp> accountAppsPending = AccountAppDao.filterForAppState(userAccountApps, "Pending");
 			List<AccountApp> accountAppsDenied = AccountAppDao.filterForAppState(userAccountApps, "Denied");
-
+			System.out.println();
 			if (accountAppsPending.size() == 0 && accountAppsDenied.size() == 0) {
 				System.out.println(tab + "No Account Applications Pending or Denied.");
 			} else {
@@ -307,6 +319,8 @@ public class Terminal implements AutoCloseable {
 			}
 
 			System.out.println();
+			if (userAccounts.size() > 0)
+				System.out.println(tab + "Enter 'gamble' to lose your money!");
 			System.out.println(tab + "Enter 'apply' to request a new account");
 			System.out.println(tab + "Enter 'join' to apply for joint access");
 			if (userAccounts.size() != 0)
@@ -317,8 +331,12 @@ public class Terminal implements AutoCloseable {
 			System.out.println(tab + "Enter 'exit' to stop the program");
 			System.out.println();
 
-			String input = scanner.nextLine();
+			String input = scanner.nextLine().toLowerCase();
 			switch (input) {
+			case "gamble":
+				if (userAccounts.size() > 0)
+					gamble(currentUser, userAccounts);
+				break;
 			case "apply":
 				applyForAccount(currentUser);
 				break;
@@ -345,7 +363,7 @@ public class Terminal implements AutoCloseable {
 				state = State.Exiting;
 				return;
 			default:
-				System.out.println("Unrecognized command, try again");
+				System.out.println("Unrec ognized command, try again");
 			}
 		}
 	}
@@ -407,7 +425,7 @@ public class Terminal implements AutoCloseable {
 				viewUserInfo(currentUser);
 				break;
 			case "join":
-				applyForJointAccount(currentUser);
+				adminApplyForJointAccount(currentUser);
 				break;
 			case "transact":
 				transactWithOneAccount(currentUser, dealerAccounts);
@@ -439,6 +457,8 @@ public class Terminal implements AutoCloseable {
 			System.out.println(tab
 					+ "Enter 'like [partial username]' to search for all usernames starting with the given partial name");
 			System.out.println(tab + "E.g 'like Wil' would find usernames like 'Will', 'William', 'Wilbert', etc");
+			System.out.println(tab + "Enter 'leave' to go to your LoggedIn Portal");
+			System.out.println(tab + "Enter 'exit' to quit the program");
 
 			String input = scanner.nextLine();
 			if (input.equals("leave"))
@@ -564,7 +584,10 @@ public class Terminal implements AutoCloseable {
 			if (pendingApps.size() > 0)
 				System.out.println(tab + "Enter 'review' to Approve or Deny pending account applications");
 			System.out.println(tab + "Enter 'view' to view user information");
-			System.out.println(tab + "Enter 'change' to cancel accounts");
+			System.out.println(tab + "Enter 'join' to gain joint account ownership");
+			System.out.println(tab + "Enter 'transact' to move money among any single account");
+			System.out.println(tab + "Enter 'transfer' to move money between any two accounts");
+			System.out.println(tab + "Enter 'change' to cancel and activate accounts");
 			System.out.println(tab + "Enter 'leave' to logout");
 			System.out.println(tab + "Enter 'exit' to stop the program");
 			System.out.println();
@@ -581,15 +604,15 @@ public class Terminal implements AutoCloseable {
 				viewUserInfo(currentUser);
 				break;
 			case "join":
-				applyForJointAccount(currentUser);
+				adminApplyForJointAccount(currentUser);
 				break;
 			case "transact":
-				adminTransactWithOneAccount(currentUser);
+				pitbossTransactWithOneAccount(currentUser);
 				break;
 			case "transfer":
-				pitbossTranferWithOneAccount(currentUser);
+				pitbossTranferBetweenTwoAccounts(currentUser);
 				break;
-			case "cancel":
+			case "change":
 				changeAccountStatus(currentUser);
 				break;
 			case "leave":
@@ -650,16 +673,18 @@ public class Terminal implements AutoCloseable {
 		case "savings":
 			type = AccountType.Savings;
 			break;
-			default:
-				System.out.println("Invalid type.");
+		default:
+			System.out.println("Invalid type.");
+			return;
 		}
-		// TODO change to menu system?
+		
 		if (currentUser.getPermission() == Permissions.User) {
 			AccountAppDao.addAccountApp(currentUser.getUserID(), type);
 			System.out.println("Application submitted! It will be processed soon.");
 		}
 		else {
 			
+			AccountDao.addAccount(currentUser.getUserID(), type, 0);
 		}		
 	}
 
@@ -684,6 +709,37 @@ public class Terminal implements AutoCloseable {
 
 		} catch (NumberFormatException e) {
 			System.out.println("accountID isn't a valid number");
+		}
+	}
+	public void adminApplyForJointAccount(User currentUser) {
+		System.out.println("Joint account application: ");
+		System.out.println(tab + "Enter '[jointUsername] [accountID] [ownerUsername] [ownerPassword]',");
+		System.out.println(tab + "In order to gain access to another user's account");
+		try {
+			String[] tokens = scanner.nextLine().split(" ");
+			if (tokens.length != 4) {
+				System.out.println("Invalid number of arguments");
+				return;
+			}
+			String jointUsername = tokens[0];
+			User jointUser = UserDao.getUser(jointUsername);
+			if (jointUser == null)
+				throw new InvalidParameterException("JointUsername doesn't exist");
+			
+			Integer account_id = Integer.valueOf(tokens[1]);
+			String username = tokens[2];
+			String password = tokens[3];
+			Account existingAccount = AccountDao.getAccountWithUserCredentials(account_id, username, password);
+			if (existingAccount != null) {
+				JointAccountDao.addJointOwnerToAccount(account_id, jointUser.getUserID());
+			} else
+				System.out.println("No account found with given credentials");
+
+		} catch (NumberFormatException e) {
+			System.out.println("accountID isn't a valid number");
+		}
+		catch (InvalidParameterException e) {
+			System.out.println(e.getMessage());
 		}
 	}
 
@@ -730,7 +786,7 @@ public class Terminal implements AutoCloseable {
 		}
 	}
 
-	public void adminTransactWithOneAccount(User currentUser) {
+	public void pitbossTransactWithOneAccount(User currentUser) {
 		System.out.println("Account transaction: Add or remove money from a single account");
 		System.out.println(tab + "Enter '[accountID] withdraw [number]' for withdrawals");
 		System.out.println(tab + "Enter '[accountID] deposit [number]' for deposits");
@@ -775,7 +831,7 @@ public class Terminal implements AutoCloseable {
 
 	public void tranferBetweenAccounts(User currentUser, List<Account> accounts) {
 		try {
-			System.out.println("Account transfer: Deposit/withdraw money between 2 accounts you can access");
+			System.out.println("Account transfer: Deposit/withdraw money between 2 of your accounts");
 			System.out.println(tab + "To move money, enter 'transfer [amount] from [accountID1] to [accountID2]'");
 			System.out.println(tab + "Alternatively, simply enter '[amount] [accountID1] [accountID2]");
 			System.out.println(tab + "e.g 'transfer 100.0 from 1101 to 1102");
@@ -830,9 +886,9 @@ public class Terminal implements AutoCloseable {
 			System.out.println(e.getMessage());
 		}
 	}
-	public void pitbossTranferWithOneAccount(User currentUser) {
+	public void pitbossTranferBetweenTwoAccounts(User currentUser) {
 		try {
-			System.out.println("Account transfer: Deposit/withdraw money between 2 accounts you can access");
+			System.out.println("Account transfer: Deposit/withdraw money between any 2 accounts");
 			System.out.println(tab + "To move money, enter 'transfer [amount] from [accountID1] to [accountID2]'");
 			System.out.println(tab + "Alternatively, simply enter '[amount] [accountID1] [accountID2]");
 			System.out.println(tab + "e.g 'transfer 100.0 from 1101 to 1102");
@@ -887,6 +943,101 @@ public class Terminal implements AutoCloseable {
 			System.out.println(e.getMessage());
 		}
 		
+	}
+	
+	public void gamble(User user, List<Account> userAccounts) {
+		System.out.println("------------------------------------------------------------------------------");
+		System.out.println(String.format("Welcome, %s. First, type number corresponding to the account you'll use", user.getFirstName()));
+		for (int i = 0; i < userAccounts.size(); i++) {
+			System.out.println(String.format("%s. %s", i + 1, userAccounts.get(i).toMinimalString()));
+		}
+		Account account = null;
+		while (account == null) {
+			try {
+				int choice = Integer.valueOf(scanner.nextLine()) - 1;
+				if (choice < 0 || choice >= userAccounts.size())
+					throw new InvalidParameterException("Needs to be a number from 1 to " + userAccounts.size());
+				else
+					account = userAccounts.get(choice);
+			}
+			catch (NumberFormatException e) {
+				System.out.println("That isn't a number!");
+			}
+			catch (InvalidParameterException e) {
+				System.out.println(e.getMessage());
+			}
+		}
+		while(state != State.Exiting) {
+			if (account.getBalance() < 5) {
+				System.out.println("You are too poor to play!");
+				return;
+			}
+			System.out.println();
+			System.out.println(tab + String.format("Current balance: $%.2f", account.getBalance()));
+			System.out.println(tab + "Enter 'play [WagerAmount]' to bet your wager");
+			System.out.println(tab + "Enter 'cheat [WagerAmount]' to card count using your wager");
+			System.out.println(tab + "Enter 'leave' or 'exit' to leave the table");
+			
+			String[] inputs = scanner.nextLine().trim().split(" ");
+			Double wager, shift;
+			Double scale = 5.0;
+			try {
+				if (inputs.length == 1) {
+					switch(inputs[0]) {
+					case "leave":
+						return;
+					case "exit":
+						state = State.Exiting;
+						return;
+					default:
+						throw new InvalidParameterException("Unrecognized command. Try 'leave' or 'exit'");
+					}
+				}
+				else if (inputs.length == 2) {
+					wager = Double.valueOf(inputs[1]);
+					if (wager > account.getBalance())
+						throw new InvalidParameterException("Can't wager more than you have, loser!");
+					switch(inputs[0].toLowerCase()) {
+					case "play":
+						shift = -0.1;
+						break;
+					case "cheat":
+						shift = 0.2;
+						break;
+					default:
+						throw new InvalidParameterException("You must enter 'play' or 'cheat as the first keyword, not " + inputs[0]);
+					}
+					playRound(account, wager, shift, scale);
+				}
+				else {
+					System.out.println(String.format("%s %s %s %s", inputs.length, inputs[0], inputs[1], inputs[2]));
+
+					throw new InvalidParameterException("Needs to have either or or 2 keywords. Try 'play' or 'cheat'");
+				}
+			}
+			catch (NumberFormatException e) {
+				System.out.println("Wager amount isn't a valid number");
+			}
+			catch (InvalidParameterException e) {
+				System.out.println(e.getMessage());
+			}			
+		}
+	}
+	public void playRound(Account account, Double wager, Double shift, Double scale) {
+		Double gauss = getGaussian(shift, scale);
+		Double moneyDelta = wager * gauss;
+		if (moneyDelta >= 0)
+			System.out.println(String.format("Congrats, you just won $%.2f!!", moneyDelta));
+		else
+			System.out.println(String.format("Too bad, you just lost $%.2f...", -moneyDelta));
+		AccountDao.gambleOnAccount(account, moneyDelta, wager);		
+		Account newA = AccountDao.getAccount(account.getAccountID());
+		System.out.println("Now at " + newA.getBalance());
+	}
+	
+	public static Double getGaussian(Double shift, Double scale) {
+		Double gauss = (random.nextGaussian() + shift) / scale;
+		return Math.min(Math.max(gauss, -0.99), 1.00);
 	}
 
 	public void setScanner(Scanner scanner) {

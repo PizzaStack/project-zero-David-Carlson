@@ -81,10 +81,10 @@ public class AccountAppDao {
 
 	public static void addAccountApp(int user_id, AccountType type) {
 		try (PreparedStatement statement = Terminal.connection
-				.prepareStatement("insert into accountapps (user_id, state, balance) values (?,?,?)")) {
+				.prepareStatement("insert into accountapps (user_id, account_type, state) values (?,?,?)")) {
 			statement.setInt(1, user_id);
-			statement.setString(2, "Pending");
-			statement.setDouble(3, balance);
+			statement.setString(2, type.toString());
+			statement.setString(3, "Pending");
 			int rows_affected = statement.executeUpdate();
 			if (rows_affected != 1)
 				throw new SQLException("AddAccountApp didn't affect 1 row");
@@ -100,7 +100,7 @@ public class AccountAppDao {
 		String updateApp = "update accountapps set state=? where id=?";
 		try (PreparedStatement statement = Terminal.connection.prepareStatement(updateApp)) {
 			statement.setString(1, newState);
-			statement.setInt(2, app.getUserID());
+			statement.setInt(2, app.getAppID());
 			if (statement.executeUpdate() != 1)
 				throw new SQLException("Approved app didn't get updated correctly");
 		} catch (SQLException e) {
@@ -109,9 +109,8 @@ public class AccountAppDao {
 			System.err.println(e.getMessage());
 		}
 		if (newState.equals("Approved")) {
-			AccountDao.addAccount(app.getUserID(), AccountType.Checking, app.getBalance());
+			AccountDao.addAccount(app.getUserID(), app.getAccountType());
 		}
-
 	}
 
 	public static List<AccountApp> filterForAppState(List<AccountApp> allApplications, String state) {

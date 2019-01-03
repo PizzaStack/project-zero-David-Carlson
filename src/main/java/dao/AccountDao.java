@@ -15,7 +15,7 @@ import sylvernale.bank.entity.Account;
 import sylvernale.bank.entity.User;
 
 public final class AccountDao {
-	private static Map<Integer, Account> accountMap = new TreeMap<Integer, Account>();
+//	private static Map<Integer, Account> accountMap = new TreeMap<Integer, Account>();
 
 	public static List<Account> getUserAccounts(int userID) {
 		List<Account> accounts = new ArrayList<Account>();
@@ -40,7 +40,7 @@ public final class AccountDao {
 				ResultSet resultSet = statement.executeQuery(sql)) {
 			while (resultSet.next()) {
 				Account account = new Account(resultSet);
-				accountMap.put(account.getAccountID(), account);
+//				accountMap.put(account.getAccountID(), account);
 				return account;
 			}
 		} catch (SQLException e) {
@@ -62,17 +62,22 @@ public final class AccountDao {
 			e.printStackTrace();
 		}
 	}
-
+	
+	public static void addAccount(int userID, AccountType type) {
+		addAccount(userID, type, 0, 0, 0);
+	}
 	public static void addAccount(int userID, AccountType type, double initialBalance) {
 		addAccount(userID, type, initialBalance, 0, 0);
 	}
 	public static void addAccount(int userID, AccountType type, double initialBalance, double money_gambled, double money_won) {
-		String sql = "insert into accounts (user_id, account_type, active, balance, money_gambled, money_won) values (?, ?, ?, ?, 0, 0);";
+		String sql = "insert into accounts (user_id, account_type, active, balance, money_gambled, money_won) values (?, ?, ?, ?, ?, ?);";
 		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
 			statement.setInt(1, userID);
 			statement.setString(2, type.toString());
 			statement.setBoolean(3, true);
 			statement.setDouble(4, initialBalance);
+			statement.setDouble(5, money_gambled);
+			statement.setDouble(6, money_won);
 			if (statement.executeUpdate() != 1)
 				throw new SQLException("Insert didn't affect 1 row");
 		} catch (SQLException e) {
@@ -92,10 +97,27 @@ public final class AccountDao {
 			e.printStackTrace();
 		}
 	}
+	public static void gambleOnAccount(Account account, Double delta, Double wager) {
+		account.gambleAmount(delta, wager);
+		String sql = "update accounts set balance=balance + ?, "
+					 + "money_gambled=money_gambled + ?, "
+					 + "money_won=money_won + ? where id=?;";
+		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
+			statement.setDouble(1, delta);
+			statement.setDouble(2, wager);
+			statement.setDouble(3, delta);
+			statement.setInt(4, account.getAccountID());
+			if (statement.executeUpdate() != 1)
+				System.out.println("Error, couldn't update account");
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static Account getAccountWithUserCredentials(int account_id, String username, String user_password) {
 		user_password = User.hashPassword(user_password);
-		String sql = "select count(*) as accounts_matching, accounts.* from accounts join users on accounts.user_id=users.id "
+		String sql = "select * from accounts join users on accounts.user_id=users.id "
 				+ "where accounts.id=? and users.username=? and users.password=?";
 
 		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
@@ -104,17 +126,13 @@ public final class AccountDao {
 			statement.setString(3, user_password);
 			try (ResultSet resultSet = statement.executeQuery()) {
 				if (resultSet.next()) {
-					int accounts_matching = resultSet.getInt("accounts_matching");
-					if (accounts_matching != 1)
-						return null;
-					else
-						return new Account(resultSet);
+					return new Account(resultSet);						
 				} else
 					throw new SQLException("No rows returned from getAccountWithUserCredentials query");
 			}
 
 		} catch (SQLException e) {
-			System.out.println("ContainsUsername error: " + e.getMessage());
+			System.out.println("getAccountWithUserCredentials error: " + e.getMessage());
 		}
 		return null;
 	}

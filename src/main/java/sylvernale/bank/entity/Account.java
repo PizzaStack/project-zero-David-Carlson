@@ -17,8 +17,8 @@ public class Account {
 	protected AccountType accountType;
 	protected Boolean active;
 	protected double balance;
-	protected double moneyGambled = 0;
-	protected double moneyWon = 0;
+	protected double moneyGambled = -1;
+	protected double moneyWon = -1;
 	
 	public Account() {
 	}
@@ -42,9 +42,8 @@ public class Account {
 		this.moneyWon = resultSet.getDouble("money_won");
 	}
 
-	public String toFullString(String margin, String tab) {
-		String description = String.format(margin + "Account #%s - Type - %s Balance: %s", 
-				accountID, accountType.toString(), balance);
+	public String toFullString(String margin, String tab) {		
+		String description = toMinimalString();
 		
 		description += "\n" + margin + tab + "Owner: ";
 		description += "\n" + margin + tab + tab + UserDao.getUser(user_id).toPrettyString();
@@ -60,7 +59,7 @@ public class Account {
 	}
 	
 	public String toPartialString(String margin, String tab) {
-		String description = String.format("Account #%s - Balance: %s", accountID, balance);
+		String description = toMinimalString();
 		List<User> jointOwners = JointAccountDao.getJointOwners(accountID);
 		if (jointOwners.size() > 0) {
 			description += "\n" + margin + tab + "Joint-Owners";
@@ -68,6 +67,22 @@ public class Account {
 				description += "\n" + margin + tab + tab + jointOwner.toPrettyString();
 		}
 		return description;
+	}
+	public String toMinimalString() {
+		return String.format("Account #%s - Balance: %s - %s", 
+				accountID, balance, getGambleLog());
+	}
+	public String getGambleLog() {
+		Double moneyDelta = moneyWon - moneyGambled;
+		if (moneyWon > 0)
+			return String.format("Won $%.2f for $%.2f gambled", moneyWon, moneyGambled);
+		else if (moneyWon < 0)
+			return String.format("Lost $%.2f for $%.2f gambled", -moneyWon, moneyGambled);
+		else if (moneyGambled == 0.0)
+			return "No Gambling history";
+		else
+			return String.format("Won $%.2f for $%.2f gambled", moneyWon, moneyGambled);
+			
 	}
 
 	public void withdrawAmount(Double withdrawAmount) {
@@ -87,6 +102,7 @@ public class Account {
 		AccountDao.changeAccountBalance(accountID, depositAmount);
 		System.out.println("You succesfully deposited $" + depositAmount.toString());
 	}
+	
 
 	public boolean containsOwner(User user) {
 		if (user.getUserID() == user_id)
@@ -98,7 +114,11 @@ public class Account {
 	}
 	
 	// Getters and setters :  ************************************************************************************
-
+	public void gambleAmount(Double delta, Double wager) {
+		this.balance += delta;
+		this.moneyWon += delta;
+		this.moneyGambled += wager;
+	}
 	public int getAccountID() {
 		return accountID;
 	}

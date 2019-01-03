@@ -3,28 +3,29 @@ package sylvernale.bank.entity;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import sylvernale.bank.AccountType;
+
 public class AccountApp {
 	protected int id;
 	protected int user_id;
+	protected AccountType accountType;
 	protected String state;
-	protected double balance;
-	// Date?
 
 	public AccountApp(ResultSet resultSet) throws SQLException {
 		this.id = resultSet.getInt("id");
 		this.user_id = resultSet.getInt("user_id");
+		this.accountType = AccountType.parseAccountType(resultSet.getString("account_type"));
 		this.state = resultSet.getString("state");
-		this.balance = resultSet.getDouble("balance");
 
 	}
 
 	@Override
 	public String toString() {
-		return String.format("Application #%s - Initial Balance : %s", id, balance);
+		return String.format("Application #%s - Type : %s", id, accountType.toString());
 	}
 
 	public String toFullString() {
-		return String.format("%s: Application #%s - Initial Balance : %s", state, id, balance);
+		return String.format("%s: Application #%s - Type : %s", state, id, accountType.toString());
 	}
 
 	// Getters and setters :
@@ -46,9 +47,8 @@ public class AccountApp {
 		if (state.equals("Approved") || state.equals("Denied") || state.equals("Pending"))
 			this.state = state;
 	}
-
-	public double getBalance() {
-		return balance;
+	public AccountType getAccountType() {
+		return accountType;
 	}
 
 }
