@@ -13,11 +13,13 @@ import dao.UserDao;
 public class Account {
 	protected int accountID;
 	protected int user_id;
-	protected String type;
+	protected String accountType;
 	protected Boolean active;
 	protected double balance;
 	protected double moneyGambled = 0;
 	protected double moneyWon = 0;
+	public final static String Savings = "Savings";
+	public final static String Checking = "Checking";
 
 	public Account() {
 	}
@@ -25,7 +27,7 @@ public class Account {
 	public Account(User owner, int accountID, double startingBalance) {
 		this.accountID = accountID;
 		user_id = owner.getUserID();
-		this.type = "Checking";
+		this.accountType = "Checking";
 		this.active = true;
 		balance = startingBalance;
 	}
@@ -35,7 +37,7 @@ public class Account {
 		this.balance = resultSet.getDouble("balance");
 		this.user_id = resultSet.getInt("user_id");
 		
-		this.type = resultSet.getString("type");
+		this.accountType = resultSet.getString("account_type");
 		this.active = resultSet.getBoolean("active");
 		this.moneyGambled = resultSet.getDouble("money_gambled");
 		this.moneyWon = resultSet.getDouble("money_won");

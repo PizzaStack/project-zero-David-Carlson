@@ -108,7 +108,7 @@ public class AccountAppDao {
 			System.err.println(e.getMessage());
 		}
 		if (newState.equals("Approved")) {
-			AccountDao.addAccount(app.getUserID(), app.getBalance());
+			AccountDao.addAccount(app.getUserID(), "Checking", app.getBalance());
 		}
 
 	}

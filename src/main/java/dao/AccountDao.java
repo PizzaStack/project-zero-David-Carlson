@@ -32,8 +32,8 @@ public final class AccountDao {
 	}
 
 	public static Account getAccount(int account_id) {
-		if (accountMap.containsKey(account_id))
-			return accountMap.get(account_id);
+//		if (accountMap.containsKey(account_id))
+//			return accountMap.get(account_id);
 		String sql = String.format("select * from accounts where id='%s';", account_id);
 		try (Statement statement = Terminal.connection.createStatement();
 				ResultSet resultSet = statement.executeQuery(sql)) {
@@ -48,12 +48,29 @@ public final class AccountDao {
 		}
 		return null;
 	}
+	
+	public static void changeAccountStatus(int account_id, Boolean activeStatus) {
+		String sql = "update accounts set active=? where id=?;";
+		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
+			statement.setBoolean(1, activeStatus);
+			statement.setInt(2, account_id);
+			if (statement.executeUpdate() != 1)
+				System.out.println("Error, couldn't update account");
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static void addAccount(int userID, String type, double initialBalance) {
-		String sql = String.format("insert into accounts (user_id, type, active, balance, money_gambled, money_won) values (%s, %s, %s, %s)",
-				userID, type, "true", initialBalance, 0, 0);
-		try (Statement statement = Terminal.connection.createStatement()) {
-			statement.executeUpdate(sql);
+		String sql = "insert into accounts (user_id, account_type, active, balance, money_gambled, money_won) values (?, ?, ?, ?, 0, 0);";
+		try (PreparedStatement statement = Terminal.connection.prepareStatement(sql)) {
+			statement.setInt(1, userID);
+			statement.setString(2, type);
+			statement.setBoolean(3, true);
+			statement.setDouble(4, initialBalance);
+			if (statement.executeUpdate() != 1)
+				throw new SQLException("Insert didn't affect 1 row");
 		} catch (SQLException e) {
 			System.out.println("Add account error: " + e.getMessage());
 		}
@@ -97,17 +114,5 @@ public final class AccountDao {
 		}
 		return null;
 	}
-
-//	public static void addAccountWithJointOwner(User user, User joint) {
-//		double initial_balance = 100.0;
-//		String sql = String.format("insert into accounts (user_id, balance) values (%s, %d)", user.getUserID(),
-//				joint.getUserID(), initial_balance);
-//		// TODO Change this
-//		try (Statement statement = Terminal.connection.createStatement()) {
-//			statement.executeUpdate(sql);
-//		} catch (SQLException e) {
-//			System.out.println("Add account error: " + e.getMessage());
-//		}
-//	}
 
 }

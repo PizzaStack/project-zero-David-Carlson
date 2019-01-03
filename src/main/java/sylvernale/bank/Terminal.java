@@ -57,14 +57,16 @@ public class Terminal implements AutoCloseable {
 				"create table accounts ( " 
 				+ "id serial primary key, " 
 				+ "user_id serial references users(id) not NULL, "
-				+ "type varchar(20),"
+				+ "account_type varchar(20),"
 				+ "active bool,"
 				+ "balance real not NULL,"
 				+ "money_gambled real,"
 				+ "money_won real);",
 
-				"create table jointowners ( " + "acc_id serial references accounts(id) not NULL,"
-						+ "user_id serial references users(id) not NULL," + "primary key(acc_id, user_id));",
+				"create table jointowners ( " 
+				+ "acc_id serial references accounts(id) not NULL,"
+				+ "user_id serial references users(id) not NULL," 
+				+ "primary key(acc_id, user_id));",
 
 				"create table accountapps (" + "id serial primary key, " + "user_id serial references users(id), "
 						+ "state varchar(20), " + "balance real not NULL);" };
@@ -98,8 +100,8 @@ public class Terminal implements AutoCloseable {
 			String n = names[i];
 			User user = new User(i, n, n, permissions[i], n, n, n, n);
 			UserDao.addUser(user);
-			AccountDao.addAccount(user.getUserID(), "Checking", 100);
-			AccountDao.addAccount(user.getUserID(), "Saving", 200);
+			AccountDao.addAccount(user.getUserID(), Account.Checking, 100);
+			AccountDao.addAccount(user.getUserID(), Account.Savings, 200);
 			AccountAppDao.addAccountApp(user.getUserID(), 200.0);
 		}
 	}
@@ -329,7 +331,7 @@ public class Terminal implements AutoCloseable {
 
 	private void runDealerLoggedIn(User currentUser) {
 		while (state != State.Exiting || state != State.SplashScreen) {
-			System.out.println("------------------------------------------------------------------------------");
+			System.out.println("\n------------------------------------------------------------------------------");
 			System.out.println("Dealer Portal  -- Logged in as " + currentUser.getUsername());
 			System.out.println("------------------------------------------------------------------------------\n");
 
@@ -362,6 +364,7 @@ public class Terminal implements AutoCloseable {
 				}
 			}
 			
+			System.out.println();
 			// Get all pending *User* account applications
 			List<AccountApp> pendingApps = AccountAppDao.getPendingUserAccountApps();
 			if (pendingApps.size() > 0)
@@ -532,7 +535,7 @@ public class Terminal implements AutoCloseable {
 
 	private void runPitbossLoggedIn(User currentUser) {
 		while (state != State.Exiting || state != State.SplashScreen) {
-			System.out.println("------------------------------------------------------------------------------");
+			System.out.println("\n------------------------------------------------------------------------------");
 			System.out.println("Pitboss Portal  -- Logged in as " + currentUser.getUsername());
 			System.out.println("------------------------------------------------------------------------------\n");
 
@@ -540,7 +543,7 @@ public class Terminal implements AutoCloseable {
 			if (pendingApps.size() > 0)
 				System.out.println(tab + "Enter 'review' to Approve or Deny pending account applications");
 			System.out.println(tab + "Enter 'view' to view user information");
-
+			System.out.println(tab + "Enter 'change' to cancel accounts");
 			System.out.println(tab + "Enter 'leave' to logout");
 			System.out.println(tab + "Enter 'exit' to stop the program");
 			System.out.println();
@@ -565,6 +568,9 @@ public class Terminal implements AutoCloseable {
 			case "transfer":
 				pitbossTranferWithOneAccount(currentUser);
 				break;
+			case "cancel":
+				changeAccountStatus(currentUser);
+				break;
 			case "leave":
 				System.out.println("Logging out...");
 				state = State.SplashScreen;
@@ -575,6 +581,41 @@ public class Terminal implements AutoCloseable {
 			default:
 				System.out.println("Unrecognized command, try again");
 			}
+		}
+	}
+
+	private void changeAccountStatus(User currentUser) {
+		System.out.println("Cancel a user account: ");
+		System.out.println(tab + "Enter 'cancel [accountID]' to cancel the account");
+		System.out.println(tab + "Enter 'activate [accountID]' to activate the account");
+		try {
+			String[] tokens = scanner.nextLine().split(" ");
+			if (tokens.length != 2)
+				throw new InvalidParameterException();
+			String operation = tokens[0];
+			Integer account_id = Integer.valueOf(tokens[1]);
+			Boolean newStatus;
+			if (operation.equals("cancel"))
+				newStatus = false;
+			else if (operation.equals("activate"))
+				newStatus = true;
+			else
+				throw new InvalidParameterException("Operation isn't valid.");
+				
+			Account existingAccount = AccountDao.getAccount(account_id);
+			if (existingAccount == null) {
+				throw new InvalidParameterException("AccountID is not valid");
+			} 
+			else {
+				AccountDao.changeAccountStatus(account_id, newStatus);
+				System.out.println(String.format("Account #%s is now Active: %s", account_id, newStatus));
+			}				
+
+		} catch (NumberFormatException e) {
+			System.out.println("accountID isn't a valid number");
+		}		
+		catch (InvalidParameterException e) {
+			System.out.println(e.getMessage());
 		}
 	}
 
